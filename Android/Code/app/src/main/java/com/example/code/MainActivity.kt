@@ -17,6 +17,9 @@ import androidx.compose.material.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.code.ui.navigation.NavRailItems
+import com.example.code.ui.screens.arena.ArenaScreen
+import com.example.code.ui.screens.bluetooth.BluetoothScreen
+import com.example.code.ui.screens.debug.DebugScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,14 +41,13 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colors.background
                 ) {
                     Row {
+                        // Nav Rail
                         NavRailItems(navController, items)
+                        // Screens
                         NavHost(navController = navController, startDestination = "Bluetooth") {
-                            composable(route = "Bluetooth") { Text(text = "Bluetooth Page") }
-                            composable(route = "Arena") { Text(text = "Arena Page") }
-                            composable(route = "Debug") { Text(text = "Debug Page") }
-//                            items.forEach { item ->
-//                                composable(route = item) { Text(text = item) }
-//                            }
+                            composable(route = "Bluetooth") { BluetoothScreen() }
+                            composable(route = "Arena") { ArenaScreen() }
+                            composable(route = "Debug") { DebugScreen() }
                         }
                     }
                 }
