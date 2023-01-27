@@ -13,8 +13,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.code.ui.theme.CodeTheme
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.code.ui.navigation.NavRailItems
@@ -45,7 +46,11 @@ class MainActivity : ComponentActivity() {
                         // Nav Rail
                         NavRailItems(navController, items)
                         // Screens
-                        NavHost(navController = navController, startDestination = "Bluetooth") {
+                        NavHost(
+                            navController = navController,
+                            startDestination = "Bluetooth",
+                            modifier = Modifier.padding(50.dp)
+                        ) {
                             composable(route = "Bluetooth") { BluetoothScreen() }
                             composable(route = "Arena") { ArenaScreen() }
                             composable(route = "Debug") { DebugScreen() }
