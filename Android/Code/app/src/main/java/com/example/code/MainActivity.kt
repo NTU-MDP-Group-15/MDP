@@ -14,6 +14,7 @@ import com.example.code.ui.theme.CodeTheme
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.*
+import androidx.compose.ui.Alignment
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.code.ui.navigation.NavRailItems

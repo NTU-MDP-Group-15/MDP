@@ -1,10 +1,12 @@
 package com.example.code.ui.navigation
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material.Icon
 import androidx.compose.material.NavigationRail
 import androidx.compose.material.NavigationRailItem
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -19,6 +21,7 @@ fun NavRailItems(navController: NavHostController, items: List<String>) {
     )
 
     NavigationRail {
+        Spacer(Modifier.weight(1f))
         items.forEachIndexed { index, item ->
             val currentDestination = navController.currentBackStackEntryAsState().value?.destination
             NavigationRailItem(
@@ -28,5 +31,6 @@ fun NavRailItems(navController: NavHostController, items: List<String>) {
                 onClick = { navController.navigate(item) }
             )
         }
+        Spacer(Modifier.weight(1f))
     }
 }
