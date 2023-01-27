@@ -21,7 +21,7 @@ fun NavRailItems(navController: NavHostController, items: List<String>) {
     )
 
     NavigationRail {
-        Spacer(Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(1f))
         items.forEachIndexed { index, item ->
             val currentDestination = navController.currentBackStackEntryAsState().value?.destination
             NavigationRailItem(
@@ -31,6 +31,6 @@ fun NavRailItems(navController: NavHostController, items: List<String>) {
                 onClick = { navController.navigate(item) }
             )
         }
-        Spacer(Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
