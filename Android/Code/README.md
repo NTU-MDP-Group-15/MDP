@@ -1,5 +1,0 @@
-
-# Android Application Code
-
-
-
