@@ -1,0 +1,12 @@
+# python
+__pycache__/
+
+# package builds
+*.egg-info
+
+# ignore exps
+imagerec/runs/detect/*
+gitImageRecVenv/*
+test_labels/*
+
+!.gitignore
