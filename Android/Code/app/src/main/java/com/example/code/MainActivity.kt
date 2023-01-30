@@ -59,8 +59,9 @@ class MainActivity : ComponentActivity() {
         registerReceiver(bluetoothViewModel.receiver, startFilter)
         registerReceiver(bluetoothViewModel.receiver, endFilter)
 
+        // Request for Location Information (Bluetooth)
         if (ContextCompat.checkSelfPermission(
-                baseContext, android.Manifest.permission.ACCESS_FINE_LOCATION
+                baseContext, Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
@@ -78,7 +79,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val items = listOf("Bluetooth", "Arena", "Debug")
 
-            // Request to Turn On Bluetooth
+            // Request to Turn On Bluetooth (if Off)
             if (!bluetoothViewModel.bluetoothAdapter.isEnabled) {
                 val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                 activityResultLauncher.launch(enableBluetoothIntent)

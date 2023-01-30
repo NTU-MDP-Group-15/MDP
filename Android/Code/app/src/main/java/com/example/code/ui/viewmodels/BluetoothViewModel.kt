@@ -51,16 +51,11 @@ class BluetoothViewModel : ViewModel() {
                     if (device != null) {
                         val updated = discoveredDevices.plus(device)
                         discoveredDevices = updated
-
                         _uiState.update { currentState ->
                             currentState.copy(discoveredDevices = updated)
                         }
-
-                        Log.i("Bluetooth", "onReceive: Device added: $device")
-                        Log.i("Bluetooth", "discoveredDevices: $discoveredDevices")
-                        Log.i("Bluetooth", "updated: $updated")
                     }
-                    Log.i("Bluetooth", "onReceive: Device found")
+                    Log.i("Bluetooth", "onReceive: Device Found")
                 }
                 BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
                     Log.i("Bluetooth", "onReceive: Started Discovery")
