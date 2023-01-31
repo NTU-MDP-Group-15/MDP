@@ -4,22 +4,19 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothAdapter.getDefaultAdapter
 import android.bluetooth.BluetoothDevice
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -27,8 +24,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.code.ui.navigation.NavRailItems
+import com.example.code.ui.screens.arena.ArenaScreen
+import com.example.code.ui.screens.bluetooth.BluetoothScreen
+import com.example.code.ui.screens.debug.DebugScreen
 import com.example.code.ui.theme.CodeTheme
 import com.example.code.ui.viewmodels.BluetoothViewModel
 
@@ -96,24 +98,17 @@ class MainActivity : ComponentActivity() {
                         // Nav Rail
                         NavRailItems(navController, items)
                         // Screens
-//                        NavHost(
-//                            navController = navController,
-//                            startDestination = "Bluetooth",
-//                            modifier = Modifier.padding(50.dp)
-//                        ) {
-//                            composable(route = "Bluetooth") {
-//                                BluetoothScreen(
-//                                    pairedDevices = pairedDevices,
-//                                    discoveredDevices = discoveredDevices,
-//                                    scan = { scan() }
-//                                )
-//                            }
-//                            composable(route = "Arena") { ArenaScreen() }
-//                            composable(route = "Debug") { DebugScreen() }
-//                        }
-                        MainScreen(
-                            bluetoothViewModel = BluetoothViewModel()
-                        )
+                        NavHost(
+                            navController = navController,
+                            startDestination = "Bluetooth",
+                            modifier = Modifier.padding(50.dp)
+                        ) {
+                            composable(route = "Bluetooth") {
+                                BluetoothScreen(viewModel = bluetoothViewModel)
+                            }
+                            composable(route = "Arena") { ArenaScreen() }
+                            composable(route = "Debug") { DebugScreen() }
+                        }
                     }
                 }
             }
@@ -124,60 +119,9 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
+        // Remove Bluetooth Broadcast Receiver
         if (bluetoothViewModel.bluetoothAdapter.isDiscovering)
             bluetoothViewModel.bluetoothAdapter.cancelDiscovery()
         unregisterReceiver(bluetoothViewModel.receiver)
-    }
-}
-
-@SuppressLint("MissingPermission")
-@Composable
-fun MainScreen(
-    bluetoothViewModel: BluetoothViewModel
-) {
-    val bluetoothUiState by bluetoothViewModel.uiState.collectAsState()
-
-    Column {
-        Text(text = "My Paired Devices")
-        bluetoothUiState.pairedDevices.forEach { device ->
-            Card(
-                modifier = Modifier
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
-                elevation = 10.dp
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(text = device.name)
-                    Text(text = device.address)
-                }
-            }
-        }
-        Text(text = "Available Devices")
-        Button(
-            onClick = { bluetoothViewModel.scan() }
-        ) {
-            Text(
-                text = "Scan",
-            )
-        }
-        bluetoothUiState.discoveredDevices.forEach { device ->
-            Card(
-                modifier = Modifier
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
-                elevation = 10.dp
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(text = device.name)
-                    Text(text = device.address)
-                }
-            }
-        }
     }
 }
