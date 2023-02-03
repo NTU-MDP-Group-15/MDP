@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.code.service.BluetoothService
 import com.example.code.ui.navigation.NavRailItems
 import com.example.code.ui.screens.arena.ArenaScreen
 import com.example.code.ui.screens.bluetooth.BluetoothScreen
@@ -38,14 +39,17 @@ class MainActivity : ComponentActivity() {
     // Bluetooth View Model
     private val bluetoothViewModel = BluetoothViewModel()
 
+    // Initialise Bluetooth Service
+    private val bluetoothService = BluetoothService(bluetoothViewModel)
+
     // Bluetooth Permissions
     private val activityResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            Log.i("Bluetooth", ":request permission result ok")
+            Log.d("Bluetooth", ":request permission result ok")
         } else {
-            Log.i("Bluetooth", ":request permission result canceled / denied")
+            Log.d("Bluetooth", ":request permission result canceled / denied")
         }
     }
 
@@ -53,24 +57,38 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Register for broadcasts when a device is discovered.
-        val foundFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-        val startFilter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-        val endFilter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-        registerReceiver(bluetoothViewModel.receiver, foundFilter)
-        registerReceiver(bluetoothViewModel.receiver, startFilter)
-        registerReceiver(bluetoothViewModel.receiver, endFilter)
-
-        // Request for Location Information (Bluetooth)
+        // Request for Location Information (Bluetooth Permission)
         if (ContextCompat.checkSelfPermission(
                 baseContext, Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
-                this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                1
+                this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 1
             )
         }
+
+        // Request to Turn On Bluetooth (if Off)
+        if (!bluetoothService.mAdapter.isEnabled) {
+            val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            activityResultLauncher.launch(enableBluetoothIntent)
+        }
+
+        // Request to make Device Discoverable for 300s
+        val discoverableIntent: Intent =
+            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
+            }
+        activityResultLauncher.launch(discoverableIntent)
+        // TODO: remove below if above works
+//        startActivityForResult(discoverableIntent, 1)
+
+        // Register for broadcasts when a device is discovered
+        val foundFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
+        val startFilter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+        val endFilter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        registerReceiver(bluetoothService.receiver, foundFilter)
+        registerReceiver(bluetoothService.receiver, startFilter)
+        registerReceiver(bluetoothService.receiver, endFilter)
 
         setContent {
             // Set Landscape Orientation
@@ -80,12 +98,6 @@ class MainActivity : ComponentActivity() {
             // Navigation Rail
             val navController = rememberNavController()
             val items = listOf("Bluetooth", "Arena", "Debug")
-
-            // Request to Turn On Bluetooth (if Off)
-            if (!bluetoothViewModel.bluetoothAdapter.isEnabled) {
-                val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                activityResultLauncher.launch(enableBluetoothIntent)
-            }
 
             // App Entry Point
             CodeTheme {
@@ -104,7 +116,10 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(50.dp)
                         ) {
                             composable(route = "Bluetooth") {
-                                BluetoothScreen(viewModel = bluetoothViewModel)
+                                BluetoothScreen(
+                                    viewModel = bluetoothViewModel,
+                                    bluetoothService = bluetoothService
+                                )
                             }
                             composable(route = "Arena") { ArenaScreen() }
                             composable(route = "Debug") { DebugScreen() }
@@ -119,9 +134,10 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
+        // Stop Bluetooth Service
+        bluetoothService.stop()
+
         // Remove Bluetooth Broadcast Receiver
-        if (bluetoothViewModel.bluetoothAdapter.isDiscovering)
-            bluetoothViewModel.bluetoothAdapter.cancelDiscovery()
-        unregisterReceiver(bluetoothViewModel.receiver)
+        unregisterReceiver(bluetoothService.receiver)
     }
 }

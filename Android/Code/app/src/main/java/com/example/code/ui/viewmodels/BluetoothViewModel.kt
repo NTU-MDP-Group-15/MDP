@@ -20,53 +20,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-@SuppressLint("MissingPermission")
 class BluetoothViewModel : ViewModel() {
+    // TODO: should only handle data, move others to BluetoothService
+
+    // Debugging
+    private val TAG: String? = "BluetoothViewModel"
+
     // Bluetooth Adapter
-    val bluetoothAdapter: BluetoothAdapter = getDefaultAdapter()
+//    val bluetoothAdapter: BluetoothAdapter = getDefaultAdapter()
 
     // Bluetooth UI State
     private val _uiState = MutableStateFlow(BluetoothUiState())
     val uiState: StateFlow<BluetoothUiState> = _uiState.asStateFlow()
 
-    // Init Bluetooth UI State Values
-    init {
-        _uiState.value = BluetoothUiState(pairedDevices = bluetoothAdapter.bondedDevices)
-    }
-
-    // Scan for Bluetooth Devices
-    fun scan() {
-        if (bluetoothAdapter.isDiscovering) {
-            bluetoothAdapter.cancelDiscovery()
-            bluetoothAdapter.startDiscovery()
-        } else {
-            bluetoothAdapter.startDiscovery()
-        }
-        Handler(Looper.getMainLooper()).postDelayed({
-            bluetoothAdapter.cancelDiscovery()
-        }, 10000L)
-    }
-
-    @SuppressLint("MissingPermission")
-    // Register BroadcastReceiver
-    val receiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            when (intent.action) {
-                BluetoothDevice.ACTION_FOUND -> {
-                    val device: BluetoothDevice? =
-                        intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    if (device != null) {
-                        addDiscoveredDevice(device)
-                        Log.i("Bluetooth", "onReceive: Device Found")
-                    }
-                }
-                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
-                    Log.i("Bluetooth", "onReceive: Started Discovery")
-                }
-                BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    Log.i("Bluetooth", "onReceive: Finished Discovery")
-                }
-            }
+    // Register Paired Devices
+    fun addPairedDevices(pairedDevices: Set<BluetoothDevice>) {
+        _uiState.update { currentState ->
+            currentState.copy(pairedDevices = pairedDevices)
         }
     }
 
@@ -77,12 +47,11 @@ class BluetoothViewModel : ViewModel() {
         }
     }
 
-    fun testFun() {
+    // Clear Discovered Devices
+    fun clearDiscoveredDevices() {
         _uiState.update { currentState ->
-            currentState.copy(testText = "it changed")
+            currentState.copy(discoveredDevices = emptySet())
         }
-        Log.i("Bluetooth", "testText: ${_uiState.value.testText}")
-        Log.i("Bluetooth", "discoveredDevices: ${_uiState.value.discoveredDevices}")
     }
 
     // Pair with Bluetooth Device
@@ -90,5 +59,5 @@ class BluetoothViewModel : ViewModel() {
     // Disconnect with Bluetooth Device
 
     // Forget Bluetooth Device
-
 }
+
