@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ArenaScreen() {
     Column() {
-        Text(text = "Arena Screen")
         Primes()
     }
 }
