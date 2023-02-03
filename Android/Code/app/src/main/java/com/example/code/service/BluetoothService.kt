@@ -27,7 +27,7 @@ class BluetoothService(
     // Name for the SDP record when creating server socket
     private val SDP_NAME = "MDP15"
 
-    // Unique UUID
+    // Unique UUID (to provide to Rpi)
 //    private val MY_UUID: UUID = UUID.fromString("d3da3f39-8688-4d15-a47f-50fb82315496")
 
     // Generic UUID for Debugging
@@ -99,6 +99,7 @@ class BluetoothService(
     /**
      * Return the current connection state
      */
+    // TODO: maybe use scaffold top bar to display connection status
     @Synchronized
     fun getState(): Int {
         return mState
@@ -106,30 +107,26 @@ class BluetoothService(
 
     /**
      * Start the bluetooth service. AcceptThread to begin a
-     * session in listening (server) mode. Called by the Activity onResume()
+     * session in listening (server) mode.
      */
     @Synchronized
     fun start() {
         Log.d(TAG, "start()")
-
         // Cancel any thread attempting to make a connection
         if (mConnectThread != null) {
             mConnectThread!!.cancel()
             mConnectThread = null
         }
-
         // Cancel any thread currently running a connection
         if (mConnectedThread != null) {
             mConnectedThread!!.cancel()
             mConnectedThread = null
         }
-
         // Start the thread to listen on a BluetoothServerSocket
         if (mAcceptThread == null) {
             mAcceptThread = AcceptThread()
             mAcceptThread!!.start()
         }
-        // Update UI title
     }
 
     /**
@@ -140,7 +137,6 @@ class BluetoothService(
     @Synchronized
     fun connect(device: BluetoothDevice) {
         Log.d(TAG, "connect to: $device")
-
         // Cancel any thread attempting to make a connection
         if (mState == STATE_CONNECTING) {
             if (mConnectThread != null) {
@@ -148,18 +144,14 @@ class BluetoothService(
                 mConnectThread = null
             }
         }
-
         // Cancel any thread currently running a connection
         if (mConnectedThread != null) {
             mConnectedThread!!.cancel()
             mConnectedThread = null
         }
-
         // Start the thread to connect with the given device
         mConnectThread = ConnectThread(device)
         mConnectThread!!.start()
-
-        // Update UI title
     }
 
     /**
@@ -171,41 +163,28 @@ class BluetoothService(
     @Synchronized
     fun connected(socket: BluetoothSocket?, device: BluetoothDevice) {
         Log.d(TAG, "connected()")
-
         // Cancel the thread that completed the connection
         if (mConnectThread != null) {
             mConnectThread!!.cancel()
             mConnectThread = null
         }
-
         // Cancel any thread currently running a connection
         if (mConnectedThread != null) {
             mConnectedThread!!.cancel()
             mConnectedThread = null
         }
-
         // Cancel the accept thread because we only want to connect to one device
         if (mAcceptThread != null) {
             mAcceptThread!!.cancel()
             mAcceptThread = null
         }
-
         // Start the thread to manage the connection and perform transmissions
         mConnectedThread = socket?.let { ConnectedThread(it) }
         mConnectedThread!!.start()
-
-        // Send the name of the connected device back to the UI Activity
-//        val msg: Message = mHandler.obtainMessage(Constants.MESSAGE_DEVICE_NAME)
-//        val bundle = Bundle()
-//        bundle.putString(Constants.DEVICE_NAME, device.name)
-//        msg.setData(bundle)
-//        mHandler.sendMessage(msg)
-
-        // Update UI title
     }
 
     /**
-     * Stop all threads and adapter
+     * Stop all threads and adapter discovery
      */
     @SuppressLint("MissingPermission")
     @Synchronized
@@ -227,14 +206,12 @@ class BluetoothService(
             mAcceptThread = null
         }
         mState = STATE_NONE
-        // Update UI title
     }
 
     /**
      * Write to the ConnectedThread in an un-synchronized manner
      *
      * @param out The bytes to write
-     * @see ConnectedThread.write
      */
     fun write(out: ByteArray?) {
         // Create temporary object
@@ -244,40 +221,19 @@ class BluetoothService(
             if (mState != STATE_CONNECTED) return
             r = mConnectedThread!!
         }
-        // Perform the write un-synchronized
         r.write(out)
     }
 
-    /**
-     * Indicate that the connection attempt failed and notify the UI Activity.
-     */
     private fun connectionFailed() {
-        // Send a failure message back to the Activity
-//        val msg: Message = mHandler.obtainMessage(Constants.MESSAGE_TOAST)
-//        val bundle = Bundle()
-//        bundle.putString(Constants.TOAST, "Unable to connect device")
-//        msg.setData(bundle)
-//        mHandler.sendMessage(msg)
+        Log.i(TAG, "connectionFailed()")
         mState = STATE_NONE
-        // Update UI title
-
         // Start the service over to restart listening mode
         this@BluetoothService.start()
     }
 
-    /**
-     * Indicate that the connection was lost and notify the UI Activity.
-     */
     private fun connectionLost() {
-        // Send a failure message back to the Activity
-//        val msg: Message = mHandler.obtainMessage(Constants.MESSAGE_TOAST)
-//        val bundle = Bundle()
-//        bundle.putString(Constants.TOAST, "Device connection was lost")
-//        msg.setData(bundle)
-//        mHandler.sendMessage(msg)
+        Log.i(TAG, "connectionLost()")
         mState = STATE_NONE
-        // Update UI title
-
         // Start the service over to restart listening mode
         this@BluetoothService.start()
     }
@@ -293,7 +249,6 @@ class BluetoothService(
 
         init {
             var tmp: BluetoothServerSocket? = null
-            // Create a new listening server socket
             try {
                 tmp = mAdapter.listenUsingRfcommWithServiceRecord(SDP_NAME, MY_UUID)
             } catch (e: IOException) {
@@ -307,7 +262,6 @@ class BluetoothService(
 
         override fun run() {
             Log.d(TAG, "mAcceptThread Running: $this")
-//            name = "AcceptThread"
             var socket: BluetoothSocket?
 
             // Listen to the server socket if we're not connected
@@ -382,7 +336,6 @@ class BluetoothService(
 
         override fun run() {
             Log.i(TAG, "mConnectThread Running: $this")
-//            name = "ConnectThread"
 
             // Always cancel discovery because it will slow down a connection
             mAdapter.cancelDiscovery()
@@ -458,11 +411,8 @@ class BluetoothService(
                 try {
                     // Read from the InputStream
                     mmInStream!!.read(buffer)
-
-                    viewModel.addReceivedMessage(String(buffer) + "\n")
-                    // Send the obtained bytes to the UI Activity
-//                    mHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
-//                        .sendToTarget()
+                    val message = MessageService.parseMessage(buffer)
+                    viewModel.addReceivedMessage(message)
                 } catch (e: IOException) {
                     Log.e(TAG, "disconnected", e)
                     connectionLost()
@@ -479,9 +429,6 @@ class BluetoothService(
         fun write(buffer: ByteArray?) {
             try {
                 mmOutStream!!.write(buffer)
-                // Share the sent message back to the UI Activity
-//                mHandler.obtainMessage(Constants.MESSAGE_WRITE, -1, -1, buffer)
-//                    .sendToTarget()
             } catch (e: IOException) {
                 Log.e(TAG, "Exception during write", e)
             }
@@ -495,5 +442,4 @@ class BluetoothService(
             }
         }
     }
-
 }
