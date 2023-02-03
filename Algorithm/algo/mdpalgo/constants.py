@@ -36,7 +36,7 @@ RPI_CONNECTED = False
 HEADLESS = False
 
 # WIFI server IP address
-RPI_IP = "192.168.27.27" # real RPi server
+RPI_IP = "192.168.15.1" # real RPi server
 TEST_IP = "127.0.0.1" # Use this for easier testing RPi integration without RPi
 WIFI_IP = RPI_IP
-PORT = 25565
+PORT = 12345
