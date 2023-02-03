@@ -75,7 +75,7 @@ class BluetoothService(
      * Update UI status according to current state of connection
      */
     @Synchronized
-    fun updateUIsomething() {
+    fun updateUI() {
         // TODO
     }
 
@@ -231,7 +231,7 @@ class BluetoothService(
     }
 
     /**
-     * Write to the ConnectedThread in an unsynchronized manner
+     * Write to the ConnectedThread in an un-synchronized manner
      *
      * @param out The bytes to write
      * @see ConnectedThread.write
@@ -244,7 +244,7 @@ class BluetoothService(
             if (mState != STATE_CONNECTED) return
             r = mConnectedThread!!
         }
-        // Perform the write unsynchronized
+        // Perform the write un-synchronized
         r.write(out)
     }
 
@@ -288,7 +288,7 @@ class BluetoothService(
      * (or until cancelled).
      */
     @SuppressLint("MissingPermission")
-    private inner class AcceptThread() : Thread() {
+    private inner class AcceptThread : Thread() {
         private val mmServerSocket: BluetoothServerSocket?
 
         init {
@@ -369,6 +369,7 @@ class BluetoothService(
             var tmp: BluetoothSocket? = null
 
             // Get a BluetoothSocket for a connection with the given BluetoothDevice
+            // TODO get UUID of Laptop with AMD Tool
             try {
                 tmp = mmDevice.createRfcommSocketToServiceRecord(MY_UUID)
             } catch (e: IOException) {
@@ -451,13 +452,12 @@ class BluetoothService(
         override fun run() {
             Log.d(TAG, "mConnectedThread Running: $this")
             val buffer = ByteArray(1024)
-            var bytes: Int
 
             // Keep listening to the InputStream while connected
             while (mState == STATE_CONNECTED) {
                 try {
                     // Read from the InputStream
-                    bytes = mmInStream!!.read(buffer)
+                    mmInStream!!.read(buffer)
 
                     viewModel.addReceivedMessage(String(buffer) + "\n")
                     // Send the obtained bytes to the UI Activity

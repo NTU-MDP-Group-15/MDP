@@ -11,9 +11,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.code.service.BluetoothService
 import com.example.code.ui.viewmodels.BluetoothViewModel
-import java.nio.charset.Charset
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -27,38 +27,40 @@ fun BluetoothScreen(
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier.fillMaxWidth(1f)
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.3f)
+                .fillMaxHeight(1f),
+            verticalArrangement = Arrangement.Center
+        ) {
             Button(
                 onClick = { bluetoothService.start() }
             ) {
-                Text(
-                    text = "Open Socket for Connection",
-                )
+                Text(text = "Open Socket for Connection")
             }
+            Spacer(modifier = Modifier.height(30.dp))
             Button(
                 onClick = { bluetoothService.stop() }
             ) {
-                Text(
-                    text = "Stop Bluetooth Service",
-                )
+                Text(text = "Stop Bluetooth Service")
             }
-        }
-        Column {
-            Text(text = "Available Devices")
+            Spacer(modifier = Modifier.height(30.dp))
             Button(
                 onClick = { bluetoothService.scan() }
             ) {
-                Text(
-                    text = "Scan for Devices",
-                )
+                Text(text = "Scan for Devices")
             }
+        }
+        Column(
+            modifier = Modifier.fillMaxWidth(0.9f)
+        ) {
+            Text(text = "Available Devices", fontSize = 20.sp)
             LazyColumn(
                 devices = bluetoothUiState.discoveredDevices.toList(),
                 service = bluetoothService
             )
         }
     }
-
 }
 
 @SuppressLint("MissingPermission")
@@ -68,7 +70,7 @@ fun LazyColumn(
     service: BluetoothService
 ) {
     LazyColumn(
-        modifier = Modifier.height(200.dp)
+        modifier = Modifier.fillMaxHeight(0.8f)
     ) {
         items(devices) { device ->
             Card(
@@ -86,9 +88,7 @@ fun LazyColumn(
                     Button(
                         onClick = { service.connect(device) }
                     ) {
-                        Text(
-                            text = "Connect",
-                        )
+                        Text(text = "Connect")
                     }
                 }
             }
