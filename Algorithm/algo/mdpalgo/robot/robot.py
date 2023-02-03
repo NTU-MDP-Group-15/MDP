@@ -115,6 +115,17 @@ class Robot(object):
         self.velocity[0] = vx
         self.velocity[1] = vy
 
+    def check_collision(self, final_pos):
+        target_grid_pos = self.grid.pixel_to_grid(final_pos)
+        if (target_grid_pos[0] < 1 or target_grid_pos[0] > self.grid.max_x - 1) or (target_grid_pos[1] < 1 or target_grid_pos[1] > self.grid.max_y - 1):
+            print("Car is near the wall. Unable to move further!")
+            return True
+        for obstacle_cell in self.grid.get_obstacle_coords():
+            if (target_grid_pos[0]-1<= obstacle_cell[0]<=target_grid_pos[0]+1) and (target_grid_pos[1]-1<= obstacle_cell[1]<=target_grid_pos[1]+1):
+                print("Target Position {},{} overlaps with obstacle at {},{}".format(target_grid_pos[0], target_grid_pos[1],obstacle_cell[0],obstacle_cell[1]))
+                return True
+        return False
+
     # TODO: define possible movements (for turning motions picture steering wheel direction)
     # ALL MOTIONS take place in minimal unit.
     # for 1: is by 10 (one grid)
@@ -137,6 +148,10 @@ class Robot(object):
             final_pixel_pos = Vector2(initial_pixel_pos[0] - ONE_CELL, initial_pixel_pos[1])
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
+        #Check for boundary
+        if self.check_collision(final_pixel_pos):
+            final_pixel_pos = initial_pixel_pos
+            return False
         final_angle = self.angle
 
         self.set_velocity(0, -self.speed)
@@ -148,6 +163,7 @@ class Robot(object):
 
         self.reset_velocity()
         self.update_robot(final_angle, final_pixel_pos)
+        return True
 
     def move_backward(self):
         # print("MOVE BACKWARD FACING", self.angle)
@@ -163,6 +179,9 @@ class Robot(object):
             final_pixel_pos = Vector2(initial_pixel_pos[0] + ONE_CELL, initial_pixel_pos[1])
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
+        if self.check_collision(final_pixel_pos):
+            final_pixel_pos = initial_pixel_pos
+            return False
         final_angle = self.angle
 
         self.set_velocity(0, self.speed)
@@ -196,6 +215,10 @@ class Robot(object):
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
             final_angle = initial_angle
+        #Check for boundary
+        if self.check_collision(final_pixel_pos):
+            final_pixel_pos = initial_pixel_pos
+            return False
 
         self.set_velocity(0, -self.speed)
         while not self.check_if_turned(initial_angle, final_pixel_pos):
@@ -230,6 +253,10 @@ class Robot(object):
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
             final_angle = initial_angle
+        #Check for boundary
+        if self.check_collision(final_pixel_pos):
+            final_pixel_pos = initial_pixel_pos
+            return False
 
         # Set velocity of car
         self.set_velocity(0, -self.speed)
@@ -267,6 +294,10 @@ class Robot(object):
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
             final_angle = initial_angle
+        #Check for boundary
+        if self.check_collision(final_pixel_pos):
+            final_pixel_pos = initial_pixel_pos
+            return False
 
         self.set_velocity(0, -self.speed)
         while not self.check_if_turned(initial_angle, final_pixel_pos):
@@ -303,7 +334,11 @@ class Robot(object):
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
             final_angle = initial_angle
-
+        #Check for boundary
+        if self.check_collision(final_pixel_pos):
+            final_pixel_pos = initial_pixel_pos
+            return False
+            
         self.set_velocity(0, -self.speed)
         while not self.check_if_turned(initial_angle, final_pixel_pos):
             if constants.HEADLESS:

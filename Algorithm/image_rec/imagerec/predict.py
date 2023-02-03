@@ -1,6 +1,6 @@
 import os
 from PIL import Image
-import imagerec.runs.detect
+import imagerec.detect
 from imagerec import weights
 import time
 import sys
