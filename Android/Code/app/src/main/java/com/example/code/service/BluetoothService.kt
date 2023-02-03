@@ -344,7 +344,7 @@ class BluetoothService(
 
             // Listen to the server socket if we're not connected
             while (mState != STATE_CONNECTED) {
-                Log.d(TAG, "$mState")
+                Log.d(TAG, "state: $mState")
                 socket = try {
                     // This is a blocking call and will only return on a
                     // successful connection or an exception

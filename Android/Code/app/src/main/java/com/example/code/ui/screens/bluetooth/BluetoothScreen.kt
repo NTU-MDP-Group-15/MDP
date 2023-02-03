@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.code.service.BluetoothService
 import com.example.code.ui.viewmodels.BluetoothViewModel
+import java.nio.charset.Charset
+
 
 @SuppressLint("MissingPermission")
 @Composable
@@ -40,6 +42,13 @@ fun BluetoothScreen(
             ) {
                 Text(
                     text = "Stop Test",
+                )
+            }
+            Button(
+                onClick = { bluetoothService.write("Hello".toByteArray(Charsets.UTF_8)) }
+            ) {
+                Text(
+                    text = "Send Test String",
                 )
             }
         }

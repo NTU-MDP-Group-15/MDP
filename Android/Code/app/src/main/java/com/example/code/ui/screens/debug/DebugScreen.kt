@@ -49,7 +49,9 @@ fun DebugScreen() {
                         Text(text="Clear")
                     }
                 }
-
+                Button(onClick = { /*TODO*/ }) {
+                    
+                }
             }
             Column {
                 Text(text = "Command Log", fontSize = 30.sp)
@@ -57,7 +59,6 @@ fun DebugScreen() {
                     .fillMaxHeight(0.5F)
                     .fillMaxWidth(0.5f)
                     .border(width = 2.dp, color = Color.Black)) {
-
                 }
             }
         }

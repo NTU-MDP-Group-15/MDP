@@ -23,12 +23,12 @@ fun ArenaScreen() {
 fun Primes() {
     LazyVerticalGrid(
         modifier = Modifier // 1
-            .fillMaxWidth(0.4F)
+            .fillMaxWidth(0.6F)
             .background(Color(0xFFE53935))
-            .padding(8.dp),
-        columns = GridCells.Fixed(10), // 2
+            .padding(4.dp),
+        columns = GridCells.Fixed(20), // 2
     ) {
-        items(count = 100) { // 3
+        items(count = 400) { // 3
             Box(
                 Modifier // 4
                     .aspectRatio(1f)
