@@ -22,23 +22,12 @@ import kotlinx.coroutines.flow.update
 
 class BluetoothViewModel : ViewModel() {
     // TODO: should only handle data, move others to BluetoothService
-
     // Debugging
     private val TAG: String? = "BluetoothViewModel"
-
-    // Bluetooth Adapter
-//    val bluetoothAdapter: BluetoothAdapter = getDefaultAdapter()
 
     // Bluetooth UI State
     private val _uiState = MutableStateFlow(BluetoothUiState())
     val uiState: StateFlow<BluetoothUiState> = _uiState.asStateFlow()
-
-    // Register Paired Devices
-    fun addPairedDevices(pairedDevices: Set<BluetoothDevice>) {
-        _uiState.update { currentState ->
-            currentState.copy(pairedDevices = pairedDevices)
-        }
-    }
 
     // Add Discovered Device
     fun addDiscoveredDevice(device: BluetoothDevice) {
@@ -54,7 +43,12 @@ class BluetoothViewModel : ViewModel() {
         }
     }
 
-    // Pair with Bluetooth Device
+    // Add Received Message
+    fun addReceivedMessage(message: String) {
+        _uiState.update { currentState ->
+            currentState.copy(receivedMessages = _uiState.value.receivedMessages.plus(message))
+        }
+    }
 
     // Disconnect with Bluetooth Device
 

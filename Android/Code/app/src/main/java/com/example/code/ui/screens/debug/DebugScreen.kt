@@ -15,18 +15,20 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.code.service.BluetoothService
+import com.example.code.ui.viewmodels.BluetoothViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 @Composable
-fun DebugScreen() {
+fun DebugScreen(
+    viewModel: BluetoothViewModel,
+    bluetoothService: BluetoothService
+    ) {
+    val bluetoothUiState by viewModel.uiState.collectAsState()
+    var textMsg by remember { mutableStateOf(TextFieldValue("")) }
+
     Column() {
-        Row (horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.fillMaxWidth(1f))
-        {
-            Text(text = "Connected Devices: ", fontSize=50.sp)
-        }
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
@@ -34,48 +36,47 @@ fun DebugScreen() {
                 .padding(10.dp)
         ) {
             Column {
-                Text(text = "Send To Remote", fontSize = 30.sp)
-                Card(modifier = Modifier
-                    .fillMaxHeight(0.2F)
-                    .border(width = 2.dp, color = Color.Black)) {
-                    LabelAndPlaceHolder()
+                Text(text = "Send To Remote", fontSize = 20.sp)
+                Card(
+                    modifier = Modifier
+                        .fillMaxHeight(0.2F)
+                        .border(width = 2.dp, color = Color.Black)
+                ) {
+                    TextField(
+                        value = textMsg,
+                        onValueChange = {
+                            textMsg = it
+                        },
+                        placeholder = { Text(text = "Enter Message Here") },
+                    )
                 }
-                Row(horizontalArrangement=Arrangement.SpaceBetween,
-                modifier=Modifier.fillMaxWidth(0.273f)) {
-                    Button(onClick = { /*TODO*/ }) {
-                        Text(text="Send")
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth(0.273f)
+                ) {
+                    Button(onClick = {
+                        bluetoothService.write(textMsg.text.toByteArray(Charsets.UTF_8))
+                        textMsg = TextFieldValue("")
+                    }) {
+                        Text(text = "Send")
                     }
-                    Button(onClick = { /*TODO*/ }) {
-                        Text(text="Clear")
+                    Button(onClick = { textMsg = TextFieldValue("") }) {
+                        Text(text = "Clear")
                     }
-                }
-                Button(onClick = { /*TODO*/ }) {
-                    
                 }
             }
             Column {
-                Text(text = "Command Log", fontSize = 30.sp)
-                Card(modifier = Modifier
-                    .fillMaxHeight(0.5F)
-                    .fillMaxWidth(0.5f)
-                    .border(width = 2.dp, color = Color.Black)) {
+                Text(text = "Received Messages", fontSize = 20.sp)
+                Card(
+                    modifier = Modifier
+                        .fillMaxHeight(0.5F)
+                        .fillMaxWidth(0.5f)
+                        .border(width = 2.dp, color = Color.Black)
+                ) {
+                    TextField(value = bluetoothUiState.receivedMessages, onValueChange = {}, readOnly = true)
                 }
             }
         }
     }
 }
-
-@Composable
-fun LabelAndPlaceHolder() {
-    var text by remember { mutableStateOf(TextFieldValue("")) }
-    TextField(
-        value = text,
-        onValueChange = {
-            text = it
-        },
-        label = { Text(text = "Your Messages") },
-        placeholder = { Text(text = "Enter Message Here") },
-    )
-}
-
 

@@ -15,7 +15,6 @@ import com.example.code.service.BluetoothService
 import com.example.code.ui.viewmodels.BluetoothViewModel
 import java.nio.charset.Charset
 
-
 @SuppressLint("MissingPermission")
 @Composable
 fun BluetoothScreen(
@@ -29,35 +28,22 @@ fun BluetoothScreen(
         modifier = Modifier.fillMaxWidth(1f)
     ) {
         Column {
-            Text(text = "Choose a device to pair with")
             Button(
                 onClick = { bluetoothService.start() }
             ) {
                 Text(
-                    text = "Connect Test",
+                    text = "Open Socket for Connection",
                 )
             }
             Button(
                 onClick = { bluetoothService.stop() }
             ) {
                 Text(
-                    text = "Stop Test",
-                )
-            }
-            Button(
-                onClick = { bluetoothService.write("Hello".toByteArray(Charsets.UTF_8)) }
-            ) {
-                Text(
-                    text = "Send Test String",
+                    text = "Stop Bluetooth Service",
                 )
             }
         }
         Column {
-            Text(text = "My Paired Devices")
-            LazyColumn(
-                devices = bluetoothUiState.pairedDevices.toList(),
-                service = bluetoothService
-            )
             Text(text = "Available Devices")
             Button(
                 onClick = { bluetoothService.scan() }

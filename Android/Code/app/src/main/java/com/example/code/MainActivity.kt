@@ -74,13 +74,11 @@ class MainActivity : ComponentActivity() {
         }
 
         // Request to make Device Discoverable for 300s
-        val discoverableIntent: Intent =
-            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
-            }
-        activityResultLauncher.launch(discoverableIntent)
-        // TODO: remove below if above works
-//        startActivityForResult(discoverableIntent, 1)
+//        val discoverableIntent: Intent =
+//            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+//                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
+//            }
+//        activityResultLauncher.launch(discoverableIntent)
 
         // Register for broadcasts when a device is discovered
         val foundFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
@@ -122,7 +120,12 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable(route = "Arena") { ArenaScreen() }
-                            composable(route = "Debug") { DebugScreen() }
+                            composable(route = "Debug") {
+                                DebugScreen(
+                                    viewModel = bluetoothViewModel,
+                                    bluetoothService = bluetoothService
+                                )
+                            }
                         }
                     }
                 }

@@ -8,7 +8,6 @@ import android.bluetooth.BluetoothSocket
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -23,13 +22,16 @@ class BluetoothService(
     private val viewModel: BluetoothViewModel
 ) {
     // Debugging
-    private val TAG = "BluetoothChatService"
+    private val TAG = "BT Service"
 
     // Name for the SDP record when creating server socket
-    private val SDP_NAME = "BluetoothMDP15"
+    private val SDP_NAME = "MDP15"
 
-    // Unique UUID for this application
-    private val MY_UUID: UUID = UUID.fromString("d3da3f39-8688-4d15-a47f-50fb82315496")
+    // Unique UUID
+//    private val MY_UUID: UUID = UUID.fromString("d3da3f39-8688-4d15-a47f-50fb82315496")
+
+    // Generic UUID for Debugging
+    private val MY_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
 
     // Bluetooth Adapter
     val mAdapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -108,7 +110,7 @@ class BluetoothService(
      */
     @Synchronized
     fun start() {
-        Log.d(TAG, "start")
+        Log.d(TAG, "start()")
 
         // Cancel any thread attempting to make a connection
         if (mConnectThread != null) {
@@ -168,7 +170,7 @@ class BluetoothService(
      */
     @Synchronized
     fun connected(socket: BluetoothSocket?, device: BluetoothDevice) {
-        Log.d(TAG, "connected")
+        Log.d(TAG, "connected()")
 
         // Cancel the thread that completed the connection
         if (mConnectThread != null) {
@@ -287,64 +289,30 @@ class BluetoothService(
      */
     @SuppressLint("MissingPermission")
     private inner class AcceptThread() : Thread() {
-
-//        private val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
-//            mAdapter?.listenUsingInsecureRfcommWithServiceRecord(SDP_NAME, MY_UUID)
-//        }
-//
-//        override fun run() {
-//            val status = mAdapter?.setName("Code App")
-//            val scanMode = mAdapter?.scanMode
-//            Log.d(TAG, "Name status: $status")
-//            Log.d(TAG, "Scan Mode: $scanMode")
-//
-//            // Keep listening until exception occurs or a socket is returned.
-//            var shouldLoop = true
-//            while (shouldLoop) {
-//                val socket: BluetoothSocket? = try {
-//                    mmServerSocket?.accept()
-//                } catch (e: IOException) {
-//                    Log.e(TAG, "Socket's accept() method failed", e)
-//                    shouldLoop = false
-//                    null
-//                }
-//                socket?.also {
-//                    Log.d(TAG, "Connected via Bluetooth")
-//                    mmServerSocket?.close()
-//                    shouldLoop = false
-//                }
-//            }
-//        }
-
-        // The local server socket
         private val mmServerSocket: BluetoothServerSocket?
 
         init {
             var tmp: BluetoothServerSocket? = null
-
             // Create a new listening server socket
             try {
-                tmp = mAdapter!!.listenUsingRfcommWithServiceRecord(
-                    SDP_NAME,
-                    MY_UUID
-                )
+                tmp = mAdapter.listenUsingRfcommWithServiceRecord(SDP_NAME, MY_UUID)
             } catch (e: IOException) {
                 Log.e(TAG, "listen() failed", e)
             }
             mmServerSocket = tmp
             mState = STATE_LISTEN
-            mAdapter?.setName("MDP Group 15")
-            Log.d(TAG, "listening")
+//            mAdapter?.setName("MDP Group 15")
+            Log.i(TAG, "mAcceptThread Initialised")
         }
 
         override fun run() {
-            Log.d(TAG, "BEGIN mAcceptThread $this")
-            name = "AcceptThread"
+            Log.d(TAG, "mAcceptThread Running: $this")
+//            name = "AcceptThread"
             var socket: BluetoothSocket?
 
             // Listen to the server socket if we're not connected
             while (mState != STATE_CONNECTED) {
-                Log.d(TAG, "state: $mState")
+                Log.i(TAG, "Socket is accepting connections")
                 socket = try {
                     // This is a blocking call and will only return on a
                     // successful connection or an exception
@@ -354,7 +322,7 @@ class BluetoothService(
                     break
                 }
 
-                Log.d(TAG, "socket done: $mState")
+                Log.i(TAG, "Socket Connection Accepted")
                 // If a connection was accepted
                 if (socket != null) {
                     synchronized(this@BluetoothService) {
@@ -408,14 +376,15 @@ class BluetoothService(
             }
             mmSocket = tmp
             mState = STATE_CONNECTING
+            Log.d(TAG, "mConnectThread Initialised")
         }
 
         override fun run() {
-            Log.i(TAG, "BEGIN mConnectThread")
-            name = "ConnectThread"
+            Log.i(TAG, "mConnectThread Running: $this")
+//            name = "ConnectThread"
 
             // Always cancel discovery because it will slow down a connection
-            mAdapter!!.cancelDiscovery()
+            mAdapter.cancelDiscovery()
 
             // Make a connection to the BluetoothSocket
             try {
@@ -423,6 +392,8 @@ class BluetoothService(
                 // successful connection or an exception
                 mmSocket!!.connect()
             } catch (e: IOException) {
+                Log.e(TAG, "mConnectThread mmSocket failed to connect")
+                Log.e(TAG, "Error: $e")
                 // Close the socket
                 try {
                     mmSocket!!.close()
@@ -432,6 +403,7 @@ class BluetoothService(
                 connectionFailed()
                 return
             }
+            Log.i(TAG, "mConnectThread mmSocket Connected")
 
             // Reset the ConnectThread because we're done
             synchronized(this@BluetoothService) { mConnectThread = null }
@@ -460,7 +432,6 @@ class BluetoothService(
         private val mmOutStream: OutputStream?
 
         init {
-            Log.d(TAG, "create ConnectedThread")
             mmSocket = socket
             var tmpIn: InputStream? = null
             var tmpOut: OutputStream? = null
@@ -474,10 +445,11 @@ class BluetoothService(
             mmInStream = tmpIn
             mmOutStream = tmpOut
             mState = STATE_CONNECTED
+            Log.i(TAG, "ConnectedThread Initialised")
         }
 
         override fun run() {
-            Log.d(TAG, "BEGIN mConnectedThread")
+            Log.d(TAG, "mConnectedThread Running: $this")
             val buffer = ByteArray(1024)
             var bytes: Int
 
@@ -487,6 +459,7 @@ class BluetoothService(
                     // Read from the InputStream
                     bytes = mmInStream!!.read(buffer)
 
+                    viewModel.addReceivedMessage(String(buffer) + "\n")
                     // Send the obtained bytes to the UI Activity
 //                    mHandler.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
 //                        .sendToTarget()
