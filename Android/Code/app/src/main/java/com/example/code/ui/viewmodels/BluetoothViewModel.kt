@@ -49,9 +49,5 @@ class BluetoothViewModel : ViewModel() {
             currentState.copy(receivedMessages = _uiState.value.receivedMessages.plus(message))
         }
     }
-
-    // Disconnect with Bluetooth Device
-
-    // Forget Bluetooth Device
 }
 
