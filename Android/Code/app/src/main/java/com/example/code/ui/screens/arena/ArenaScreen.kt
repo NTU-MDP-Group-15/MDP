@@ -1,40 +1,83 @@
 package com.example.code.ui.screens.arena
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.Button
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.TextField
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun ArenaScreen() {
-    Column() {
-        Primes()
-    }
-}
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun Primes() {
-    LazyVerticalGrid(
-        modifier = Modifier // 1
-            .fillMaxWidth(0.6F)
-            .background(Color(0xFFE53935))
-            .padding(4.dp),
-        columns = GridCells.Fixed(20), // 2
-    ) {
-        items(count = 400) { // 3
-            Box(
-                Modifier // 4
-                    .aspectRatio(1f)
-                    .padding(1.dp)
-                    .background(Color.Cyan)
+
+    var width by remember { mutableStateOf("20") }
+
+    Row(){
+        Column() {
+            MyCanvas(width.toInt())
+        }
+        Column(
+            modifier= Modifier.padding(start=80.dp)
+        ) {
+            Text(text = "Choose Grid Size")
+            Spacer(modifier=Modifier.padding(10.dp))
+            TextField(
+                value=width,
+                onValueChange =   {newSize ->
+                    if (newSize=="") {
+                        width="0"
+                    }
+                    else {
+                        width=newSize
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                )
             )
         }
     }
 }
+
+@Composable
+fun MyCanvas(width:Int) {
+    var gridSize=width
+    if (width>=20) {
+        gridSize=20
+    }
+    Canvas(
+        modifier = Modifier
+            .size(700.dp),
+    ) {
+        drawRect(
+            color=Color.White,
+            size=size,
+        )
+        for (i in 0 until gridSize) {
+            for (j in 0 until gridSize) {
+                val left = i * 36
+                val top = j * 36
+
+                drawRect(
+                    color=Color.Red,
+                    topLeft= Offset(left.toFloat(),top.toFloat()),
+                    size= Size(36f,36f),
+                    style= Stroke(
+                        width=3.dp.toPx()
+                    )
+                )
+            }
+        }
+    }
+
+}
+
 

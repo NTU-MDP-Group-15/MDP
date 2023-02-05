@@ -15,8 +15,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -119,7 +117,7 @@ class MainActivity : ComponentActivity() {
                                     bluetoothService = bluetoothService
                                 )
                             }
-                            composable(route = "Arena") { ArenaScreen() }
+                            composable(route = "Arena") { ArenaScreen()}
                             composable(route = "Debug") {
                                 DebugScreen(
                                     viewModel = bluetoothViewModel,
