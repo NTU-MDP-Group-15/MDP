@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelUuid
 import android.util.Log
 import com.example.code.ui.viewmodels.BluetoothViewModel
 import java.io.IOException
@@ -27,15 +28,21 @@ class BluetoothService(
     // Name for the SDP record when creating server socket
     private val SDP_NAME = "MDP15"
 
-    // Unique UUID (to provide to Rpi)
+    // Bluetooth Discoverable Name
+    private val DEVICE_NAME = "MDP 15 Android"
+
+    // Generic Bluetooth Serial Port Profile UUID for Debugging (as Server accepting connections)
+    private val SERVER_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
+
+    // Unique UUID (to provide to RPi)
 //    private val MY_UUID: UUID = UUID.fromString("d3da3f39-8688-4d15-a47f-50fb82315496")
 
-    // Generic UUID for Debugging
-    private val MY_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
-    // For Rpi
+    // UUID of RPi (as Client initiating connection)
 //    private val MY_UUID: UUID = UUID.fromString("94F39D29-7D6D-437D-973B-FBA39E49D4EE")
+
     // For Yh's laptop
-   // private val MY_UUID: UUID = UUID.fromString("4C4C4544-0053-3010-8053-CAC04F573933")
+    // private val MY_UUID: UUID = UUID.fromString("4C4C4544-0053-3010-8053-CAC04F573933")
+
     // Bluetooth Adapter
     val mAdapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
@@ -46,6 +53,7 @@ class BluetoothService(
     private var mState = 0
 
     // Constants that indicate the current connection state
+    // TODO: might want to move these into viewModel
     val STATE_NONE = 0 // we're doing nothing
     val STATE_LISTEN = 1 // now listening for incoming connections
     val STATE_CONNECTING = 2 // now initiating an outgoing connection
@@ -165,7 +173,7 @@ class BluetoothService(
      */
     @Synchronized
     fun connected(socket: BluetoothSocket?, device: BluetoothDevice) {
-        Log.d(TAG, "connected()")
+        Log.d(TAG, "connected(), device: $device")
         // Cancel the thread that completed the connection
         if (mConnectThread != null) {
             mConnectThread!!.cancel()
@@ -253,13 +261,13 @@ class BluetoothService(
         init {
             var tmp: BluetoothServerSocket? = null
             try {
-                tmp = mAdapter.listenUsingRfcommWithServiceRecord(SDP_NAME, MY_UUID)
+                tmp = mAdapter.listenUsingRfcommWithServiceRecord(SDP_NAME, SERVER_UUID)
             } catch (e: IOException) {
                 Log.e(TAG, "listen() failed", e)
             }
             mmServerSocket = tmp
             mState = STATE_LISTEN
-            mAdapter?.setName("MDP Group 15")
+//            mAdapter.name = DEVICE_NAME
             Log.i(TAG, "mAcceptThread Initialised")
         }
 
@@ -326,9 +334,25 @@ class BluetoothService(
             var tmp: BluetoothSocket? = null
 
             // Get a BluetoothSocket for a connection with the given BluetoothDevice
-            // TODO get UUID of Laptop with AMD Tool
             try {
-                tmp = mmDevice.createRfcommSocketToServiceRecord(MY_UUID)
+                // Bond with the device
+                mmDevice.createBond()
+                // Wait for the bond to be established
+                while (mmDevice.bondState != BluetoothDevice.BOND_BONDED) {
+                    try {
+                        sleep(100)
+                    } catch (e: InterruptedException) {
+                        Log.e(TAG, "Unable to Bond: $e")
+                    }
+                }
+                // Bluetooth Discovery Process to retrieve UUID
+                mmDevice.fetchUuidsWithSdp()
+                var mUuids: Array<ParcelUuid?>? = null
+                while (mUuids == null) {
+                    mUuids = mmDevice.uuids
+                }
+                // Create Socket
+                tmp = mmDevice.createRfcommSocketToServiceRecord(mUuids[0]?.uuid)
             } catch (e: IOException) {
                 Log.e(TAG, "create() failed", e)
             }
