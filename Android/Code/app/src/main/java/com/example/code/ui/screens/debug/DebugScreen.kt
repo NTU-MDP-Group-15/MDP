@@ -9,7 +9,6 @@ import androidx.compose.material.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -63,7 +62,7 @@ fun DebugScreen(
                 }
             }
             Spacer(modifier = Modifier.fillMaxHeight(0.1f))
-            robotMovementButtons(bluetoothService)
+            RobotMovementButtons(bluetoothService)
         }
         Column(
             modifier = Modifier.fillMaxWidth(0.9f)
@@ -86,34 +85,33 @@ fun DebugScreen(
 }
 
 @Composable
-fun robotMovementButtons(btService: BluetoothService) {
+fun RobotMovementButtons(btService: BluetoothService) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth(1f)
     ) {
-        movementButton(
+        MovementButton(
             btService = btService,
             msg = "f",
             resID = R.drawable.arrow_up,
             description = "Up"
         )
-        Row(
-        ) {
-            movementButton(
+        Row {
+            MovementButton(
                 btService = btService,
                 msg = "l",
                 resID = R.drawable.arrow_left,
                 description = "Left"
             )
             Spacer(modifier = Modifier.width(60.dp))
-            movementButton(
+            MovementButton(
                 btService = btService,
                 msg = "r",
                 resID = R.drawable.arrow_right,
                 description = "Right"
             )
         }
-        movementButton(
+        MovementButton(
             btService = btService,
             msg = "b",
             resID = R.drawable.arrow_down,
@@ -123,7 +121,7 @@ fun robotMovementButtons(btService: BluetoothService) {
 }
 
 @Composable
-fun movementButton(btService: BluetoothService, msg: String, resID: Int, description: String) {
+fun MovementButton(btService: BluetoothService, msg: String, resID: Int, description: String) {
     Button(
         onClick = {
             btService.write(msg.toByteArray(Charsets.UTF_8))
