@@ -1,6 +1,6 @@
 package com.example.code.ui.screens.debug
 
-import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.Card
@@ -10,9 +10,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.code.R
 import com.example.code.service.BluetoothService
 import com.example.code.ui.viewmodels.BluetoothViewModel
 
@@ -35,6 +37,7 @@ fun DebugScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(text = "Send To Remote", fontSize = 20.sp)
+            Spacer(modifier = Modifier.height(30.dp))
             Card(
                 modifier = Modifier
                     .fillMaxWidth(1f)
@@ -60,45 +63,13 @@ fun DebugScreen(
                 }
             }
             Spacer(modifier = Modifier.fillMaxHeight(0.1f))
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth(1f)
-            ) {
-                Button(onClick = {
-                    bluetoothService.write("f".toByteArray(Charsets.UTF_8))
-                    textMsg = TextFieldValue("")
-                }) {
-                    Text(text = "Forward")
-                }
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier.fillMaxWidth(0.6f)
-                ) {
-                    Button(onClick = {
-                        bluetoothService.write("l".toByteArray(Charsets.UTF_8))
-                        textMsg = TextFieldValue("")
-                    }) {
-                        Text(text = "Left")
-                    }
-                    Button(onClick = {
-                        bluetoothService.write("r".toByteArray(Charsets.UTF_8))
-                        textMsg = TextFieldValue("")
-                    }) {
-                        Text(text = "Right")
-                    }
-                }
-                Button(onClick = {
-                    bluetoothService.write("b".toByteArray(Charsets.UTF_8))
-                    textMsg = TextFieldValue("")
-                }) {
-                    Text(text = "Backward")
-                }
-            }
+            robotMovementButtons(bluetoothService)
         }
         Column(
             modifier = Modifier.fillMaxWidth(0.9f)
         ) {
             Text(text = "Received Messages", fontSize = 20.sp)
+            Spacer(modifier = Modifier.height(30.dp))
             Card(
                 modifier = Modifier
                     .fillMaxHeight(1f)
@@ -111,5 +82,59 @@ fun DebugScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun robotMovementButtons(btService: BluetoothService) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth(1f)
+    ) {
+        movementButton(
+            btService = btService,
+            msg = "f",
+            resID = R.drawable.arrow_up,
+            description = "Up"
+        )
+        Row(
+        ) {
+            movementButton(
+                btService = btService,
+                msg = "l",
+                resID = R.drawable.arrow_left,
+                description = "Left"
+            )
+            Spacer(modifier = Modifier.width(60.dp))
+            movementButton(
+                btService = btService,
+                msg = "r",
+                resID = R.drawable.arrow_right,
+                description = "Right"
+            )
+        }
+        movementButton(
+            btService = btService,
+            msg = "b",
+            resID = R.drawable.arrow_down,
+            description = "Down"
+        )
+    }
+}
+
+@Composable
+fun movementButton(btService: BluetoothService, msg: String, resID: Int, description: String) {
+    Button(
+        onClick = {
+            btService.write(msg.toByteArray(Charsets.UTF_8))
+        },
+        modifier = Modifier
+            .height(60.dp)
+            .width(60.dp)
+    ) {
+        Image(
+            painter = painterResource(id = resID),
+            contentDescription = description
+        )
     }
 }
