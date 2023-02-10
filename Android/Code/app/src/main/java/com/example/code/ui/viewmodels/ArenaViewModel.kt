@@ -29,9 +29,9 @@ class ArenaViewModel : ViewModel() {
     }
 
     // Add Obstacle
-    fun addObstacle(obstacle: Map<K, V>) {
-
-    }
+//    fun addObstacle(obstacle: Map<K, V>) {
+//
+//    }
 
     // Remove Obstacle
 
