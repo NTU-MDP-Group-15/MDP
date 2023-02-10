@@ -4,16 +4,20 @@ import android.util.Log
 
 class MessageService {
     companion object {
-        fun parseMessage(buffer: ByteArray): String {
-            val msg = String(buffer)
-            val list: List<String> = msg.split(", ")
+        fun parseMessage(buffer: ByteArray, bytes: Int): String {
+            // Note to change protocol for checklist
+            val msg = String(buffer, 0, bytes)
+            val list: List<String> = msg.split(" ")
             val tag: String = list[0]
             var parsedMsg = ""
             when (tag) {
                 "[C4]" -> parsedMsg = parseRobotStatus(list)
                 "[C9]" -> parsedMsg = parseTargetIDFound(list)
                 "[C10]" -> parsedMsg = parseRobotPosFacing(list)
-                else -> Log.d("MessageService", "Unknown Format: $msg")
+                else -> {
+                    Log.d("MessageService", "Unknown Format: $msg")
+                    return msg + "\n"
+                }
             }
             return parsedMsg + "\n"
         }
@@ -34,21 +38,23 @@ class MessageService {
         private fun parseRobotStatus(list: List<String>): String {
             val action = list[1]
             val value = list[2]
+            //
+            Log.d("", value)
             var parsedMsg = ""
             when (action) {
                 "MOV" -> {
                     parsedMsg = "Moving "
                     when (value) {
-                        "F" -> parsedMsg += "Forward"
-                        "B" -> parsedMsg += "Backward"
-                        "L" -> parsedMsg += "Left"
-                        "R" -> parsedMsg += "Right"
+                        "Fd" -> parsedMsg += "Forward"
+                        "Bd" -> parsedMsg += "Backward"
+                        "Lt" -> parsedMsg += "Left"
+                        "Rt" -> parsedMsg += "Right"
                     }
                 }
                 "IMG" -> {
                     when (value) {
-                        "T" -> parsedMsg = "Taking a Photo"
-                        "M" -> parsedMsg = "Running Model on Image"
+                        "TP" -> parsedMsg = "Taking a Photo"
+                        "MI" -> parsedMsg = "Running Model on Image"
                     }
                 }
                 "TAR" -> parsedMsg = "Heading to Target $value"

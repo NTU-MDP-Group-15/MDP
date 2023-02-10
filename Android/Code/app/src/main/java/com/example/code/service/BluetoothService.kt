@@ -32,7 +32,10 @@ class BluetoothService(
 
     // Generic UUID for Debugging
     private val MY_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
-
+    // For Rpi
+//    private val MY_UUID: UUID = UUID.fromString("94F39D29-7D6D-437D-973B-FBA39E49D4EE")
+    // For Yh's laptop
+   // private val MY_UUID: UUID = UUID.fromString("4C4C4544-0053-3010-8053-CAC04F573933")
     // Bluetooth Adapter
     val mAdapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
@@ -256,7 +259,7 @@ class BluetoothService(
             }
             mmServerSocket = tmp
             mState = STATE_LISTEN
-//            mAdapter?.setName("MDP Group 15")
+            mAdapter?.setName("MDP Group 15")
             Log.i(TAG, "mAcceptThread Initialised")
         }
 
@@ -410,8 +413,8 @@ class BluetoothService(
             while (mState == STATE_CONNECTED) {
                 try {
                     // Read from the InputStream
-                    mmInStream!!.read(buffer)
-                    val message = MessageService.parseMessage(buffer)
+                    val bytes = mmInStream!!.read(buffer)
+                    val message = MessageService.parseMessage(buffer, bytes)
                     viewModel.addReceivedMessage(message)
                 } catch (e: IOException) {
                     Log.e(TAG, "disconnected", e)
