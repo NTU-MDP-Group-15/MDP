@@ -9,6 +9,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,6 +35,12 @@ fun BluetoothScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Button(
+                onClick = { bluetoothService.scan() }
+            ) {
+                Text(text = "Scan for Devices")
+            }
+            Spacer(modifier = Modifier.height(30.dp))
+            Button(
                 onClick = { bluetoothService.start() }
             ) {
                 Text(text = "Open Socket for Connection")
@@ -44,17 +51,13 @@ fun BluetoothScreen(
             ) {
                 Text(text = "Stop Bluetooth Service")
             }
-            Spacer(modifier = Modifier.height(30.dp))
-            Button(
-                onClick = { bluetoothService.scan() }
-            ) {
-                Text(text = "Scan for Devices")
-            }
         }
         Column(
-            modifier = Modifier.fillMaxWidth(0.9f)
+            modifier = Modifier.fillMaxWidth(0.9f),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = "Available Devices", fontSize = 20.sp)
+            Spacer(modifier = Modifier.height(30.dp))
             LazyColumn(
                 devices = bluetoothUiState.discoveredDevices.toList(),
                 service = bluetoothService
@@ -69,13 +72,17 @@ fun LazyColumn(
     devices: List<BluetoothDevice>,
     service: BluetoothService
 ) {
+    val filteredDevices = devices.filter { it.name != null }
     LazyColumn(
-        modifier = Modifier.fillMaxHeight(0.8f)
+        modifier = Modifier
+            .fillMaxHeight(1f)
+            .fillMaxWidth(1f)
     ) {
-        items(devices) { device ->
+        items(filteredDevices) { device ->
             Card(
                 modifier = Modifier
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                    .fillMaxWidth(1f),
                 elevation = 10.dp
             ) {
                 Column(
