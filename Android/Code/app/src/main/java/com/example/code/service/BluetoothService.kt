@@ -350,8 +350,10 @@ class BluetoothService(
                 var mUuids: Array<ParcelUuid?>? = null
                 while (mUuids == null) {
                     mUuids = mmDevice.uuids
+                    Log.d(TAG, "mUuids: $mUuids")
                 }
                 // Create Socket
+                Log.d(TAG, "Creating Socket... UUID: ${mUuids[0]?.uuid}")
                 tmp = mmDevice.createRfcommSocketToServiceRecord(mUuids[0]?.uuid)
             } catch (e: IOException) {
                 Log.e(TAG, "create() failed", e)
