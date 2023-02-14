@@ -1,5 +1,6 @@
 package com.example.code.ui.screens.arena
 
+import android.util.Log
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -14,7 +15,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
-import com.example.code.ui.viewmodels.MainViewModel
+import androidx.compose.ui.unit.dp
+import com.example.code.ui.viewmodels.ArenaViewModel
+//import com.example.code.ui.viewmodels.MainViewModel
 
 internal val LocalDragTargetInfo = compositionLocalOf { DragTargetInfo() }
 
@@ -39,7 +42,7 @@ fun DragableScreen(
                         val offset = (state.dragPosition + state.dragOffset)
                         scaleX = 1.3f
                         scaleY = 1.3f
-                        alpha = if (targetSize == IntSize.Zero) 0f else .9f
+                        alpha = if (targetSize == IntSize.Zero) 0f else .2f
                         translationX = offset.x.minus(targetSize.width / 2)
                         translationY = offset.y.minus(targetSize.height / 2)
                     }
@@ -58,7 +61,8 @@ fun DragableScreen(
 fun <T> DragTarget(
     modifier: Modifier = Modifier,
     dataToDrop: T,
-    viewModel: MainViewModel,
+    viewModel: ArenaViewModel,
+//    viewModel: MainViewModel,
     content: @Composable (() -> Unit)
 ) {
 

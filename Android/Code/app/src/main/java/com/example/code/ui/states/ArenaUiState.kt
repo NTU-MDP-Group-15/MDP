@@ -4,8 +4,7 @@ data class ArenaUiState(
     val gridWidth: Int = 20,
     val gridHeight: Int = 20,
 
-    val taskMode: Int = 0,
-    val taskConfig: List<String> = listOf("Image Recognition", "Fastest Car"),
+    val taskMode: String = "Image Recognition",
 
     val obstacles: List<Obstacle> = emptyList(),
 
@@ -16,8 +15,8 @@ data class ArenaUiState(
 
 data class Obstacle(
     val id: Int,
-    val xPos: Int,
-    val yPos: Int,
+    val xPos: Int? = null,
+    val yPos: Int? = null,
     val facing: String? = null,
     val value: String? = null
 )

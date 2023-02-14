@@ -3,7 +3,6 @@ package com.example.code.ui.screens.debug
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
-import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.*
@@ -37,16 +36,12 @@ fun DebugScreen(
         ) {
             Text(text = "Send To Remote", fontSize = 20.sp)
             Spacer(modifier = Modifier.height(30.dp))
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-            ) {
-                TextField(
-                    value = textMsg,
-                    onValueChange = { textMsg = it },
-                    placeholder = { Text(text = "Enter Message Here") },
-                )
-            }
+            TextField(
+                    modifier = Modifier.fillMaxWidth(1f),
+                value = textMsg,
+                onValueChange = { textMsg = it },
+                placeholder = { Text(text = "Enter Message Here") },
+            )
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth(1f)
@@ -69,17 +64,14 @@ fun DebugScreen(
         ) {
             Text(text = "Received Messages", fontSize = 20.sp)
             Spacer(modifier = Modifier.height(30.dp))
-            Card(
+            TextField(
                 modifier = Modifier
                     .fillMaxHeight(1f)
-                    .fillMaxWidth(1f)
-            ) {
-                TextField(
-                    value = bluetoothUiState.receivedMessages,
-                    onValueChange = {},
-                    readOnly = true
-                )
-            }
+                    .fillMaxWidth(1f),
+                value = bluetoothUiState.receivedMessages,
+                onValueChange = {},
+                readOnly = true
+            )
         }
     }
 }

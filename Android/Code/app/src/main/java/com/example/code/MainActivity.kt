@@ -14,10 +14,12 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -28,14 +30,19 @@ import androidx.navigation.compose.rememberNavController
 import com.example.code.service.BluetoothService
 import com.example.code.ui.navigation.NavRailItems
 import com.example.code.ui.screens.arena.ArenaScreen
+import com.example.code.ui.screens.arena.DragableScreen
 import com.example.code.ui.screens.bluetooth.BluetoothScreen
 import com.example.code.ui.screens.debug.DebugScreen
 import com.example.code.ui.theme.CodeTheme
+import com.example.code.ui.viewmodels.ArenaViewModel
 import com.example.code.ui.viewmodels.BluetoothViewModel
 
 class MainActivity : ComponentActivity() {
     // Bluetooth View Model
     private val bluetoothViewModel = BluetoothViewModel()
+
+    // Arena View Model
+    private val arenaViewModel = ArenaViewModel()
 
     // Initialise Bluetooth Service
     private val bluetoothService = BluetoothService(bluetoothViewModel)
@@ -72,11 +79,11 @@ class MainActivity : ComponentActivity() {
         }
 
         // Request to make Device Discoverable for 300s
-        val discoverableIntent: Intent =
-            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
-            }
-        activityResultLauncher.launch(discoverableIntent)
+//        val discoverableIntent: Intent =
+//            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
+//                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
+//            }
+//        activityResultLauncher.launch(discoverableIntent)
 
         // Register for broadcasts when a device is discovered
         val foundFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
@@ -102,27 +109,35 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Row {
-                        // Nav Rail
-                        NavRailItems(navController, items)
-                        // Screens
-                        NavHost(
-                            navController = navController,
-                            startDestination = "Arena",
-                            modifier = Modifier.padding(50.dp)
-                        ) {
-                            composable(route = "Bluetooth") {
-                                BluetoothScreen(
-                                    viewModel = bluetoothViewModel,
-                                    bluetoothService = bluetoothService
-                                )
-                            }
-                            composable(route = "Arena") { ArenaScreen() }
-                            composable(route = "Debug") {
-                                DebugScreen(
-                                    viewModel = bluetoothViewModel,
-                                    bluetoothService = bluetoothService
-                                )
+                    DragableScreen(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Row {
+                            // Nav Rail
+                            NavRailItems(navController, items)
+                            // Screens
+                            NavHost(
+                                navController = navController,
+                                startDestination = "Arena",
+                                modifier = Modifier.padding(50.dp)
+                            ) {
+                                composable(route = "Bluetooth") {
+                                    BluetoothScreen(
+                                        viewModel = bluetoothViewModel,
+                                        bluetoothService = bluetoothService
+                                    )
+                                }
+                                composable(route = "Arena") {
+                                    ArenaScreen(
+                                        viewModel = arenaViewModel
+                                    )
+                                }
+                                composable(route = "Debug") {
+                                    DebugScreen(
+                                        viewModel = bluetoothViewModel,
+                                        bluetoothService = bluetoothService
+                                    )
+                                }
                             }
                         }
                     }
