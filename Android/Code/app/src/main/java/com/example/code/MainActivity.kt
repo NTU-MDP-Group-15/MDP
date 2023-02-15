@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
     private val arenaViewModel = ArenaViewModel()
 
     // Initialise Bluetooth Service
-    private val bluetoothService = BluetoothService(bluetoothViewModel)
+    private val bluetoothService = BluetoothService(bluetoothViewModel, arenaViewModel)
 
     // Bluetooth Permissions
     private val activityResultLauncher = registerForActivityResult(

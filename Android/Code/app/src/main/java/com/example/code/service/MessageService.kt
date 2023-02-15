@@ -4,8 +4,9 @@ import android.util.Log
 
 class MessageService {
     companion object {
-        fun parseMessage(buffer: ByteArray, bytes: Int): String {
+        fun parseMessage(buffer: ByteArray, bytes: Int): HashMap<String, String> {
             // Note to change protocol for checklist
+            val result = hashMapOf<String, String>("type" to "status")
             val msg = String(buffer, 0, bytes)
             val list: List<String> = msg.split(" ")
             val tag: String = list[0]
@@ -13,13 +14,15 @@ class MessageService {
             when (tag) {
                 "[C4]" -> parsedMsg = parseRobotStatus(list)
                 "[C9]" -> parsedMsg = parseTargetIDFound(list)
-                "[C10]" -> parsedMsg = parseRobotPosFacing(list)
+                "[C10]" -> parsedMsg = parseRobotPosFacing(list, result)
                 else -> {
                     Log.d("MessageService", "Unknown Format: $msg")
-                    return msg + "\n"
+                    parsedMsg = msg
                 }
             }
-            return parsedMsg + "\n"
+            parsedMsg += "\n"
+            result["msg"] = parsedMsg
+            return result
         }
 
         private fun toByteArray(msg: String): ByteArray {
@@ -91,10 +94,14 @@ class MessageService {
 
         // C10: Robot Position and Facing
         // [Tag], Robot_X_Coordinate, Robot_Y_Coordinate, Facing
-        private fun parseRobotPosFacing(list: List<String>): String {
+        private fun parseRobotPosFacing(list: List<String>, result: HashMap<String, String>): String {
             val x = list[1]
             val y = list[2]
             val facing = list[3]
+            result.replace("type", "robot")
+            result["x"] = x
+            result["y"] = y
+            result["facing"] = facing
             return "Robot is currently at ($x, $y), facing $facing"
         }
     }

@@ -12,15 +12,18 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
+import com.example.code.ui.viewmodels.ArenaViewModel
 import com.example.code.ui.viewmodels.BluetoothViewModel
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
+import kotlin.collections.HashMap
 
 class BluetoothService(
     // ViewModel
-    private val viewModel: BluetoothViewModel
+    private val bluetoothViewModel: BluetoothViewModel,
+    private val arenaViewModel: ArenaViewModel
 ) {
     // Debugging
     private val TAG = "BT Service"
@@ -53,7 +56,7 @@ class BluetoothService(
     private var mState = 0
 
     // Constants that indicate the current connection state
-    // TODO: might want to move these into viewModel
+    // TODO: might want to move these into bluetoothViewModel
     val STATE_NONE = 0 // we're doing nothing
     val STATE_LISTEN = 1 // now listening for incoming connections
     val STATE_CONNECTING = 2 // now initiating an outgoing connection
@@ -68,7 +71,7 @@ class BluetoothService(
                     val device: BluetoothDevice? =
                         intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
                     if (device != null) {
-                        viewModel.addDiscoveredDevice(device)
+                        bluetoothViewModel.addDiscoveredDevice(device)
                         Log.d(TAG, "onReceive: Device Found")
                     }
                 }
@@ -95,7 +98,7 @@ class BluetoothService(
      */
     @SuppressLint("MissingPermission")
     fun scan() {
-        viewModel.clearDiscoveredDevices()
+        bluetoothViewModel.clearDiscoveredDevices()
         if (mAdapter.isDiscovering) {
             mAdapter.cancelDiscovery()
             mAdapter.startDiscovery()
@@ -440,8 +443,14 @@ class BluetoothService(
                 try {
                     // Read from the InputStream
                     val bytes = mmInStream!!.read(buffer)
-                    val message = MessageService.parseMessage(buffer, bytes)
-                    viewModel.addReceivedMessage(message)
+                    val result: HashMap<String, String> = MessageService.parseMessage(buffer, bytes)
+                    if (result["type"] == "robot")
+                        arenaViewModel.setRobotPosFacing(
+                            x = result["x"]!!.toInt(),
+                            y = result["y"]!!.toInt(),
+                            facing = result["facing"]!!
+                        )
+                    bluetoothViewModel.addReceivedMessage(result["msg"]!!)
                 } catch (e: IOException) {
                     Log.e(TAG, "disconnected", e)
                     connectionLost()
