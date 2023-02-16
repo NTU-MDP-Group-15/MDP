@@ -17,18 +17,6 @@ class ArenaViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ArenaUiState())
     val uiState: StateFlow<ArenaUiState> = _uiState.asStateFlow()
 
-    // Draggable Obstacles
-    var isCurrentlyDragging by mutableStateOf(false)
-        private set
-
-    fun startDragging() {
-        isCurrentlyDragging = true
-    }
-
-    fun stopDragging() {
-        isCurrentlyDragging = false
-    }
-
     // Set Arena Grid Size
     fun setGridSize(width: Int, height: Int) {
         var w = 0
@@ -53,39 +41,57 @@ class ArenaViewModel : ViewModel() {
     }
 
     // Add Obstacle
-    fun addObstacle(obstacle: HashMap<String, Any>) {
-        val obs = Obstacle(
-            id = obstacle["id"] as Int,
-            xPos = obstacle["xPos"] as Int?,
-            yPos = obstacle["yPos"] as Int?,
-            facing = obstacle["facing"] as String?,
-            value = obstacle["value"] as String?
-        )
-        println("Added $obs")
+    fun addObstacle(obstacle: Obstacle) {
         _uiState.update { currentState ->
             currentState.copy(
-                obstacles = _uiState.value.obstacles.plus(obs)
+                obstacles = _uiState.value.obstacles.plus(obstacle),
+                nextObsID = _uiState.value.nextObsID + 1
             )
         }
     }
 
-    fun changeObstacleFacing(obstacle: Obstacle){
+    fun changeObstacleFacing(obstacle: Obstacle) {
         val obstacles = _uiState.value.obstacles.filter { obs -> obs.id != obstacle.id }
-        if (obstacle.facing=="N") {
-            val newObstacle = Obstacle(obstacle.id,obstacle.xPos,obstacle.yPos,"E",obstacle.value)
-            _uiState.update { currentState -> currentState.copy(obstacles = obstacles.plus(newObstacle))}
-        }
-        else if (obstacle.facing=="E") {
-            val newObstacle = Obstacle(obstacle.id,obstacle.xPos,obstacle.yPos,"S",obstacle.value)
-            _uiState.update { currentState -> currentState.copy(obstacles = obstacles.plus(newObstacle))}
-        }
-        else if (obstacle.facing=="S") {
-            val newObstacle = Obstacle(obstacle.id,obstacle.xPos,obstacle.yPos,"W",obstacle.value)
-            _uiState.update { currentState -> currentState.copy(obstacles = obstacles.plus(newObstacle))}
-        }
-        else if (obstacle.facing=="W") {
-            val newObstacle = Obstacle(obstacle.id,obstacle.xPos,obstacle.yPos,"N",obstacle.value)
-            _uiState.update { currentState -> currentState.copy(obstacles = obstacles.plus(newObstacle))}
+        if (obstacle.facing == "N") {
+            val newObstacle =
+                Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "E", obstacle.value)
+            _uiState.update { currentState ->
+                currentState.copy(
+                    obstacles = obstacles.plus(
+                        newObstacle
+                    )
+                )
+            }
+        } else if (obstacle.facing == "E") {
+            val newObstacle =
+                Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "S", obstacle.value)
+            _uiState.update { currentState ->
+                currentState.copy(
+                    obstacles = obstacles.plus(
+                        newObstacle
+                    )
+                )
+            }
+        } else if (obstacle.facing == "S") {
+            val newObstacle =
+                Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "W", obstacle.value)
+            _uiState.update { currentState ->
+                currentState.copy(
+                    obstacles = obstacles.plus(
+                        newObstacle
+                    )
+                )
+            }
+        } else if (obstacle.facing == "W") {
+            val newObstacle =
+                Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "N", obstacle.value)
+            _uiState.update { currentState ->
+                currentState.copy(
+                    obstacles = obstacles.plus(
+                        newObstacle
+                    )
+                )
+            }
         }
     }
 
@@ -97,7 +103,12 @@ class ArenaViewModel : ViewModel() {
 
     // Remove all Obstacles
     fun removeAllObstacles() {
-        _uiState.update { currentState -> currentState.copy(obstacles = emptyList()) }
+        _uiState.update { currentState ->
+            currentState.copy(
+                obstacles = emptyList(),
+                nextObsID = 1
+            )
+        }
     }
 
     // Set Robot Position and Facing

@@ -7,6 +7,7 @@ data class ArenaUiState(
     val taskMode: String = "Image Recognition",
 
     val obstacles: List<Obstacle> = emptyList(),
+    val nextObsID: Int = 1,
 
     val robotPosX: Int = 0,
     val robotPosY: Int = 0,

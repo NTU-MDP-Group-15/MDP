@@ -66,6 +66,13 @@ fun ArenaScreen(
             ObstacleInput(viewModel = viewModel, arenaUiState = arenaUiState)
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             ClearObstacles(viewModel = viewModel)
+
+            Button(onClick = { println(arenaUiState.obstacles) }) {
+                Text(text = "Test")
+            }
+            Button(onClick = { viewModel.removeObstacle(1) }) {
+                Text(text = "Remove")
+            }
         }
     }
 }
@@ -95,7 +102,7 @@ fun ArenaGrid(arenaUiState: ArenaUiState, viewModel: ArenaViewModel) {
                 Column(
                     horizontalAlignment = Alignment.End,
                 ) {
-                    for (j in arenaUiState.gridHeight-1 downTo 0) {
+                    for (j in arenaUiState.gridHeight - 1 downTo 0) {
                         if (i == 0) {
                             Row() {
                                 Text(
@@ -109,8 +116,7 @@ fun ArenaGrid(arenaUiState: ArenaUiState, viewModel: ArenaViewModel) {
                                     arenaUiState = arenaUiState
                                 )
                             }
-                        }
-                        else {
+                        } else {
                             GridBox(
                                 viewModel = viewModel,
                                 xCoord = i,
@@ -136,24 +142,43 @@ fun GridBox(
     xCoord: Int,
     yCoord: Int,
 ) {
-    DropItem<HashMap<String, Any>>(
-        modifier = Modifier.size(20.dp) // TODO: Change dynamic size?
-    ) { isInBound, obsMap ->
-        val obstacles =
+    DropItem<Obstacle>(
+        modifier = Modifier.size(20.dp)
+    ) { isInBound, obstacle ->
+        val self =
             arenaUiState.obstacles.filter { obs -> (obs.xPos == xCoord) && (obs.yPos == yCoord) }
-        if (obstacles.isNotEmpty()) {
-           drawObstacle(obstacle = obstacles.last(), viewModel = viewModel)
+        if (self.isNotEmpty()) {
+            drawObstacle(obstacle = self.first(), viewModel = viewModel)
         } else {
-            if (obsMap != null) {
-                LaunchedEffect(key1 = obsMap) {
-                    obsMap["xPos"] = xCoord
-                    obsMap["yPos"] = yCoord
-                    obsMap["id"] = arenaUiState.obstacles.size+1
-                    obsMap["facing"] = "N"
-                    viewModel.addObstacle(obsMap)
+            if (obstacle != null) {
+                LaunchedEffect(key1 = obstacle) {
+                    if (obstacle.xPos != null) {
+                        println("$xCoord, $yCoord: $obstacle")
+                        viewModel.removeObstacle(obstacleID = obstacle.id)
+                        println("$xCoord, $yCoord: After removing ${obstacle.id}: ${arenaUiState.obstacles}")
+                        viewModel.addObstacle(
+                            Obstacle(
+                                id = obstacle.id,
+                                xPos = xCoord,
+                                yPos = yCoord,
+                                facing = obstacle.facing
+                            )
+                        )
+                        println("$xCoord, $yCoord: After Adding ${obstacle.id}: ${arenaUiState.obstacles}")
+                    } else {
+                        viewModel.addObstacle(
+                            Obstacle(
+                                id = arenaUiState.nextObsID,
+                                xPos = xCoord,
+                                yPos = yCoord,
+                                facing = "N"
+                            )
+                        )
+                    }
+
                 }
             }
-            if (xCoord==arenaUiState.robotPosX && yCoord==arenaUiState.robotPosY) {
+            if (xCoord == arenaUiState.robotPosX && yCoord == arenaUiState.robotPosY) {
                 drawRobot(arenaUiState.robotFacing)
             }
             if (isInBound) {
@@ -178,8 +203,8 @@ fun GridBox(
 fun drawObstacle(
     obstacle: Obstacle,
     viewModel: ArenaViewModel,
-){
-    if (obstacle.facing=="N") {
+) {
+    if (obstacle.facing == "N") {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -203,13 +228,10 @@ fun drawObstacle(
                 text = obstacle.id.toString(),
                 color = Color.Green
             )
-            DragTarget(
-                dataToDrop = hashMapOf("id" to 0),
-                viewModel = viewModel,
-            ) {}
+            DragTarget(dataToDrop = obstacle) {}
         }
     }
-    if (obstacle.facing=="S") {
+    if (obstacle.facing == "S") {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -232,13 +254,10 @@ fun drawObstacle(
                 text = obstacle.id.toString(),
                 color = Color.Green
             )
-            DragTarget(
-                dataToDrop = hashMapOf("id" to 0),
-                viewModel = viewModel,
-            ) {}
+            DragTarget(dataToDrop = obstacle) {}
         }
     }
-    if (obstacle.facing=="E") {
+    if (obstacle.facing == "E") {
         Row {
             Box(
                 modifier = Modifier
@@ -262,14 +281,11 @@ fun drawObstacle(
                         .align(Alignment.BottomEnd)
                         .background(Color.Red)
                 )
-                DragTarget(
-                    dataToDrop = hashMapOf("id" to 0),
-                    viewModel = viewModel,
-                ) {}
+                DragTarget(dataToDrop = obstacle) {}
             }
         }
     }
-    if (obstacle.facing=="W") {
+    if (obstacle.facing == "W") {
         Row {
             Box(
                 modifier = Modifier
@@ -293,10 +309,7 @@ fun drawObstacle(
                         .align(Alignment.TopStart)
                         .background(Color.Red)
                 )
-                DragTarget(
-                    dataToDrop = hashMapOf("id" to 0),
-                    viewModel = viewModel,
-                ) {}
+                DragTarget(dataToDrop = obstacle) {}
             }
         }
     }
@@ -304,8 +317,8 @@ fun drawObstacle(
 
 @Composable
 fun drawRobot(
-    Orientation:String,
-){
+    Orientation: String,
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -313,15 +326,16 @@ fun drawRobot(
             .aspectRatio(1f)
             .background(Color.Red.copy(0.4f))
     ) {
-        Canvas(modifier = Modifier
-            .fillMaxSize()
-            .alpha(0.5f)
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(0.5f)
         ) {
-            if (Orientation=="N") {
+            if (Orientation == "N") {
                 val trianglePath = Path().apply {
                     moveTo(0f, size.height)
                     lineTo(size.width, size.height)
-                    lineTo(size.width/2, 0f)
+                    lineTo(size.width / 2, 0f)
                     close()
                 }
                 drawPath(
@@ -329,11 +343,11 @@ fun drawRobot(
                     color = Color.Blue
                 )
             }
-            if (Orientation=="S") {
+            if (Orientation == "S") {
                 val trianglePath = Path().apply {
                     moveTo(0f, 0f)
                     lineTo(size.width, 0f)
-                    lineTo(size.width/2, size.height)
+                    lineTo(size.width / 2, size.height)
                     close()
                 }
                 drawPath(
@@ -341,11 +355,11 @@ fun drawRobot(
                     color = Color.Blue
                 )
             }
-            if (Orientation=="E") {
+            if (Orientation == "E") {
                 val trianglePath = Path().apply {
                     moveTo(0f, size.height)
                     lineTo(0f, 0f)
-                    lineTo(size.width, size.height/2)
+                    lineTo(size.width, size.height / 2)
                     close()
                 }
                 drawPath(
@@ -353,11 +367,11 @@ fun drawRobot(
                     color = Color.Blue
                 )
             }
-            if (Orientation=="W") {
+            if (Orientation == "W") {
                 val trianglePath = Path().apply {
                     moveTo(size.width, size.height)
                     lineTo(size.width, 0f)
-                    lineTo(0f, size.height/2)
+                    lineTo(0f, size.height / 2)
                     close()
                 }
                 drawPath(
@@ -462,14 +476,13 @@ fun GridSizeInput(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
 }
 
 @Composable
-fun ObstacleInput(viewModel: ArenaViewModel,arenaUiState: ArenaUiState) {
+fun ObstacleInput(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = "Drag Obstacle onto Arena: ", fontWeight = FontWeight.Bold)
         DragTarget(
-            dataToDrop = hashMapOf("id" to (arenaUiState.obstacles.size)),
-            viewModel = viewModel
+            dataToDrop = Obstacle(id = arenaUiState.nextObsID, facing = "N")
         ) {
             Box(
                 modifier = Modifier
@@ -479,19 +492,19 @@ fun ObstacleInput(viewModel: ArenaViewModel,arenaUiState: ArenaUiState) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = (arenaUiState.obstacles.size+1).toString(),
+                    text = (arenaUiState.nextObsID).toString(),
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold
                 )
             }
         }
         Spacer(modifier = Modifier.padding(10.dp))
-        DropItem<HashMap<String, Any>>(
+        DropItem<Obstacle>(
             modifier = Modifier.size(55.dp) // TODO: Change dynamic size?
-        ) { isInBound, obsMap ->
-            if (obsMap != null) {
-                LaunchedEffect(key1 = obsMap) {
-
+        ) { isInBound, obstacle ->
+            if (obstacle != null) {
+                LaunchedEffect(key1 = obstacle) {
+                    viewModel.removeObstacle(obstacleID = obstacle.id)
                 }
             }
             if (isInBound) {
@@ -536,8 +549,8 @@ fun ClearObstacles(viewModel: ArenaViewModel) {
 
 @Composable
 fun SetRobotOrientation(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
-    var robotX by remember { mutableStateOf("0")}
-    var robotY by remember { mutableStateOf("0")}
+    var robotX by remember { mutableStateOf("0") }
+    var robotY by remember { mutableStateOf("0") }
 
     Spacer(modifier = Modifier.padding(5.dp))
     Row(
