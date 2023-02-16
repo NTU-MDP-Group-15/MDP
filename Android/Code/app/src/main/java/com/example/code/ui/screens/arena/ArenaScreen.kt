@@ -14,6 +14,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.code.ui.states.ArenaUiState
 import com.example.code.ui.states.Obstacle
 import com.example.code.ui.viewmodels.ArenaViewModel
@@ -43,10 +45,9 @@ fun ArenaScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.6f)
+                .fillMaxWidth(0.55f)
                 .fillMaxHeight(1f)
         ) {
-            StatusDisplay(arenaUiState = arenaUiState)
             ArenaGrid(arenaUiState = arenaUiState, viewModel = viewModel)
         }
 
@@ -55,43 +56,17 @@ fun ArenaScreen(
             modifier = Modifier
                 .fillMaxHeight(1f)
                 .fillMaxWidth(1f)
-                .padding(25.dp, 0.dp, 0.dp, 0.dp)
+                .padding(0.dp, 0.dp, 0.dp, 0.dp)
         ) {
+            StatusDisplay(arenaUiState = arenaUiState)
+            Spacer(modifier = Modifier.padding(bottom = spacerDP))
             TaskModeInput(viewModel = viewModel, arenaUiState = arenaUiState)
             GridSizeInput(viewModel = viewModel, arenaUiState = arenaUiState)
-            ObstacleInput(viewModel = viewModel)
+            SetRobotOrientation(viewModel = viewModel, arenaUiState = arenaUiState)
+            ObstacleInput(viewModel = viewModel, arenaUiState = arenaUiState)
+            Spacer(modifier = Modifier.padding(bottom = spacerDP))
+            ClearObstacles(viewModel = viewModel)
         }
-
-        //        Column(
-        //            modifier = Modifier.padding(start = 80.dp)
-        //        ) {
-        //            Button(
-        //                onClick = {
-        //                    if (x == "" || y == "") {
-        //                        obstacles = obstacles.union(setOf(Pair(0, 0)))
-        //                        obstacles = obstacles.minus(setOf(Pair(0, 0)))
-        //                    } else {
-        //                        obstacles = obstacles.union(setOf(Pair(x.toInt(), y.toInt())))
-        //                    }
-        //                },
-        //                content = {
-        //                    Text("Add obstacle")
-        //                }
-        //            )
-        //            Button(
-        //                onClick = {
-        //                    if (x == "" || y == "") {
-        //                        obstacles = obstacles.union(setOf(Pair(0, 0)))
-        //                        obstacles = obstacles.minus(setOf(Pair(0, 0)))
-        //                    } else {
-        //                        obstacles = obstacles.minus(setOf(Pair(x.toInt(), y.toInt())))
-        //                    }
-        //                },
-        //                content = {
-        //                    Text("Remove obstacle")
-        //                }
-        //            )
-        //        }
     }
 }
 
@@ -101,7 +76,8 @@ fun StatusDisplay(arenaUiState: ArenaUiState) {
         Text(
             text = "${arenaUiState.taskMode} | " +
                     "${arenaUiState.gridWidth}, ${arenaUiState.gridHeight} | " +
-                    ""
+                    "",
+            fontWeight = FontWeight.ExtraBold
         )
     }
 }
@@ -111,21 +87,21 @@ fun ArenaGrid(arenaUiState: ArenaUiState, viewModel: ArenaViewModel) {
     Box(
         modifier = Modifier
             .fillMaxWidth(1f)
-            .fillMaxHeight(1f),
-//        contentAlignment = Alignment.Center
+            .fillMaxHeight(1f)
     ) {
-        Row {
+        Row(
+        ) {
             for (i in 0 until arenaUiState.gridWidth) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.End,
                 ) {
-                    Text(text = "$i")
-                    for (j in 0 until arenaUiState.gridHeight) {
+                    for (j in arenaUiState.gridHeight-1 downTo 0) {
                         if (i == 0) {
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(text = "$j")
+                            Row() {
+                                Text(
+                                    text = "$j ",
+                                    fontSize = 13.sp
+                                )
                                 GridBox(
                                     viewModel = viewModel,
                                     xCoord = i,
@@ -133,14 +109,20 @@ fun ArenaGrid(arenaUiState: ArenaUiState, viewModel: ArenaViewModel) {
                                     arenaUiState = arenaUiState
                                 )
                             }
-                        } else
+                        }
+                        else {
                             GridBox(
                                 viewModel = viewModel,
                                 xCoord = i,
                                 yCoord = j,
                                 arenaUiState = arenaUiState
                             )
+                        }
                     }
+                    Text(
+                        text = "$i",
+                        fontSize = 13.sp
+                    )
                 }
             }
         }
@@ -152,29 +134,27 @@ fun GridBox(
     viewModel: ArenaViewModel,
     arenaUiState: ArenaUiState,
     xCoord: Int,
-    yCoord: Int
+    yCoord: Int,
 ) {
     DropItem<HashMap<String, Any>>(
-        modifier = Modifier.size(30.dp) // TODO: Change dynamic size?
+        modifier = Modifier.size(20.dp) // TODO: Change dynamic size?
     ) { isInBound, obsMap ->
         val obstacles =
             arenaUiState.obstacles.filter { obs -> (obs.xPos == xCoord) && (obs.yPos == yCoord) }
         if (obstacles.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .border(1.dp, Color.Black)
-                    .background(Color.Black)
-            ) {
-                // drag itme
-            }
+           drawObstacle(obstacle = obstacles.last(), viewModel = viewModel)
         } else {
             if (obsMap != null) {
                 LaunchedEffect(key1 = obsMap) {
                     obsMap["xPos"] = xCoord
                     obsMap["yPos"] = yCoord
+                    obsMap["id"] = arenaUiState.obstacles.size+1
+                    obsMap["facing"] = "N"
                     viewModel.addObstacle(obsMap)
                 }
+            }
+            if (xCoord==arenaUiState.robotPosX && yCoord==arenaUiState.robotPosY) {
+                drawRobot(arenaUiState.robotFacing)
             }
             if (isInBound) {
                 Box(
@@ -188,6 +168,201 @@ fun GridBox(
                     modifier = Modifier
                         .fillMaxSize()
                         .border(1.dp, Color.Black),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun drawObstacle(
+    obstacle: Obstacle,
+    viewModel: ArenaViewModel,
+){
+    if (obstacle.facing=="N") {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(1.dp, Color.Black)
+                .aspectRatio(1f)
+                .background(Color.Black)
+                .clickable {
+                    println("Changing orientation...")
+                    viewModel.changeObstacleFacing(obstacle)
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .align(Alignment.TopCenter)
+                    .background(Color.Red)
+            ) {}
+            Text(
+                text = obstacle.id.toString(),
+                color = Color.Green
+            )
+            DragTarget(
+                dataToDrop = hashMapOf("id" to 0),
+                viewModel = viewModel,
+            ) {}
+        }
+    }
+    if (obstacle.facing=="S") {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(1.dp, Color.Black)
+                .aspectRatio(1f)
+                .background(Color.Black)
+                .clickable {
+                    viewModel.changeObstacleFacing(obstacle)
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(Color.Red)
+            ) {}
+            Text(
+                text = obstacle.id.toString(),
+                color = Color.Green
+            )
+            DragTarget(
+                dataToDrop = hashMapOf("id" to 0),
+                viewModel = viewModel,
+            ) {}
+        }
+    }
+    if (obstacle.facing=="E") {
+        Row {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(1.dp, Color.Black)
+                    .aspectRatio(1f)
+                    .background(Color.Black)
+                    .clickable {
+                        viewModel.changeObstacleFacing(obstacle)
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = obstacle.id.toString(),
+                    color = Color.Green
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(3.dp)
+                        .align(Alignment.BottomEnd)
+                        .background(Color.Red)
+                )
+                DragTarget(
+                    dataToDrop = hashMapOf("id" to 0),
+                    viewModel = viewModel,
+                ) {}
+            }
+        }
+    }
+    if (obstacle.facing=="W") {
+        Row {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(1.dp, Color.Black)
+                    .aspectRatio(1f)
+                    .background(Color.Black)
+                    .clickable {
+                        viewModel.changeObstacleFacing(obstacle)
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = obstacle.id.toString(),
+                    color = Color.Green
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(3.dp)
+                        .align(Alignment.TopStart)
+                        .background(Color.Red)
+                )
+                DragTarget(
+                    dataToDrop = hashMapOf("id" to 0),
+                    viewModel = viewModel,
+                ) {}
+            }
+        }
+    }
+}
+
+@Composable
+fun drawRobot(
+    Orientation:String,
+){
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .border(1.dp, Color.Black)
+            .aspectRatio(1f)
+            .background(Color.Red.copy(0.4f))
+    ) {
+        Canvas(modifier = Modifier
+            .fillMaxSize()
+            .alpha(0.5f)
+        ) {
+            if (Orientation=="N") {
+                val trianglePath = Path().apply {
+                    moveTo(0f, size.height)
+                    lineTo(size.width, size.height)
+                    lineTo(size.width/2, 0f)
+                    close()
+                }
+                drawPath(
+                    path = trianglePath,
+                    color = Color.Blue
+                )
+            }
+            if (Orientation=="S") {
+                val trianglePath = Path().apply {
+                    moveTo(0f, 0f)
+                    lineTo(size.width, 0f)
+                    lineTo(size.width/2, size.height)
+                    close()
+                }
+                drawPath(
+                    path = trianglePath,
+                    color = Color.Blue
+                )
+            }
+            if (Orientation=="E") {
+                val trianglePath = Path().apply {
+                    moveTo(0f, size.height)
+                    lineTo(0f, 0f)
+                    lineTo(size.width, size.height/2)
+                    close()
+                }
+                drawPath(
+                    path = trianglePath,
+                    color = Color.Blue
+                )
+            }
+            if (Orientation=="W") {
+                val trianglePath = Path().apply {
+                    moveTo(size.width, size.height)
+                    lineTo(size.width, 0f)
+                    lineTo(0f, size.height/2)
+                    close()
+                }
+                drawPath(
+                    path = trianglePath,
+                    color = Color.Blue
                 )
             }
         }
@@ -287,13 +462,13 @@ fun GridSizeInput(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
 }
 
 @Composable
-fun ObstacleInput(viewModel: ArenaViewModel) {
+fun ObstacleInput(viewModel: ArenaViewModel,arenaUiState: ArenaUiState) {
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "Drag Obstacle onto Arena: ")
+        Text(text = "Drag Obstacle onto Arena: ", fontWeight = FontWeight.Bold)
         DragTarget(
-            dataToDrop = hashMapOf("id" to 1),
+            dataToDrop = hashMapOf("id" to (arenaUiState.obstacles.size)),
             viewModel = viewModel
         ) {
             Box(
@@ -304,12 +479,13 @@ fun ObstacleInput(viewModel: ArenaViewModel) {
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "Next ID",
+                    text = (arenaUiState.obstacles.size+1).toString(),
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold
                 )
             }
         }
+        Spacer(modifier = Modifier.padding(10.dp))
         DropItem<HashMap<String, Any>>(
             modifier = Modifier.size(55.dp) // TODO: Change dynamic size?
         ) { isInBound, obsMap ->
@@ -337,5 +513,86 @@ fun ObstacleInput(viewModel: ArenaViewModel) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ClearObstacles(viewModel: ArenaViewModel) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = "Remove all obstacles: ", fontWeight = FontWeight.Bold)
+        Button(
+            onClick = { viewModel.removeAllObstacles() },
+            modifier = Modifier
+                .size(100.dp)
+                .shadow(5.dp)
+                .background(Color.Black),
+        ) {
+            Text(text = "Clear all")
+        }
+    }
+}
+
+@Composable
+fun SetRobotOrientation(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
+    var robotX by remember { mutableStateOf("0")}
+    var robotY by remember { mutableStateOf("0")}
+
+    Spacer(modifier = Modifier.padding(5.dp))
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .padding(0.dp, 0.dp, 0.dp, spacerDP),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = "Robot Start Point", fontWeight = FontWeight.Bold)
+        Text(text = "X: ")
+        TextField(
+            modifier = Modifier.width(70.dp),
+            value = robotX,
+            onValueChange = { newX: String ->
+                if (newX != "") {
+                    val w = newX.toInt()
+                    if (w in 0..20) {
+                        viewModel.setRobotPosFacing(
+                            x = w,
+                            y = arenaUiState.robotPosY,
+                            facing = "N"
+                        )
+                    }
+                }
+                if (newX.length <= 2) {
+                    robotX = newX
+                }
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+            )
+        )
+        Text(text = "Y: ")
+        TextField(
+            modifier = Modifier.width(70.dp),
+            value = robotY,
+            onValueChange = { newY: String ->
+                if (newY != "") {
+                    val h = newY.toInt()
+                    if (h in 0..20) {
+                        viewModel.setRobotPosFacing(
+                            x = arenaUiState.robotPosX,
+                            y = h,
+                            facing = "N"
+                        )
+                    }
+                }
+                if (newY.length <= 2) {
+                    robotY = newY
+                }
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+            )
+        )
     }
 }

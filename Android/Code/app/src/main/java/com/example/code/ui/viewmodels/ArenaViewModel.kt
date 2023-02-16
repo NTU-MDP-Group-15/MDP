@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.code.ui.screens.arena.PersonUiItem
 import com.example.code.ui.states.ArenaUiState
 import com.example.code.ui.states.Obstacle
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,11 +61,31 @@ class ArenaViewModel : ViewModel() {
             facing = obstacle["facing"] as String?,
             value = obstacle["value"] as String?
         )
-        println("Added Obstacle $obs")
+        println("Added $obs")
         _uiState.update { currentState ->
             currentState.copy(
                 obstacles = _uiState.value.obstacles.plus(obs)
             )
+        }
+    }
+
+    fun changeObstacleFacing(obstacle: Obstacle){
+        val obstacles = _uiState.value.obstacles.filter { obs -> obs.id != obstacle.id }
+        if (obstacle.facing=="N") {
+            val newObstacle = Obstacle(obstacle.id,obstacle.xPos,obstacle.yPos,"E",obstacle.value)
+            _uiState.update { currentState -> currentState.copy(obstacles = obstacles.plus(newObstacle))}
+        }
+        else if (obstacle.facing=="E") {
+            val newObstacle = Obstacle(obstacle.id,obstacle.xPos,obstacle.yPos,"S",obstacle.value)
+            _uiState.update { currentState -> currentState.copy(obstacles = obstacles.plus(newObstacle))}
+        }
+        else if (obstacle.facing=="S") {
+            val newObstacle = Obstacle(obstacle.id,obstacle.xPos,obstacle.yPos,"W",obstacle.value)
+            _uiState.update { currentState -> currentState.copy(obstacles = obstacles.plus(newObstacle))}
+        }
+        else if (obstacle.facing=="W") {
+            val newObstacle = Obstacle(obstacle.id,obstacle.xPos,obstacle.yPos,"N",obstacle.value)
+            _uiState.update { currentState -> currentState.copy(obstacles = obstacles.plus(newObstacle))}
         }
     }
 
