@@ -212,7 +212,6 @@ fun drawObstacle(
                 .aspectRatio(1f)
                 .background(Color.Black)
                 .clickable {
-                    println("Changing orientation...")
                     viewModel.changeObstacleFacing(obstacle)
                 },
             contentAlignment = Alignment.Center
@@ -224,11 +223,21 @@ fun drawObstacle(
                     .align(Alignment.TopCenter)
                     .background(Color.Red)
             ) {}
-            Text(
-                text = obstacle.id.toString(),
-                color = Color.Green
-            )
-            DragTarget(dataToDrop = obstacle) {}
+            if (obstacle.value!=null) {
+                Text(
+                    text = obstacle.value,
+                    color = Color.Green
+                )
+            }
+            else {
+                Text(
+                    text = obstacle.id.toString(),
+                    color = Color.Green
+                )
+            }
+            DragTarget(dataToDrop = obstacle) {
+
+            }
         }
     }
     if (obstacle.facing == "S") {
@@ -250,10 +259,18 @@ fun drawObstacle(
                     .align(Alignment.BottomCenter)
                     .background(Color.Red)
             ) {}
-            Text(
-                text = obstacle.id.toString(),
-                color = Color.Green
-            )
+            if (obstacle.value!=null) {
+                Text(
+                    text = obstacle.value,
+                    color = Color.Green
+                )
+            }
+            else {
+                Text(
+                    text = obstacle.id.toString(),
+                    color = Color.Green
+                )
+            }
             DragTarget(dataToDrop = obstacle) {}
         }
     }
@@ -270,10 +287,18 @@ fun drawObstacle(
                     },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = obstacle.id.toString(),
-                    color = Color.Green
-                )
+                if (obstacle.value!=null) {
+                    Text(
+                        text = obstacle.value,
+                        color = Color.Green
+                    )
+                }
+                else {
+                    Text(
+                        text = obstacle.id.toString(),
+                        color = Color.Green
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -298,10 +323,18 @@ fun drawObstacle(
                     },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = obstacle.id.toString(),
-                    color = Color.Green
-                )
+                if (obstacle.value!=null) {
+                    Text(
+                        text = obstacle.value,
+                        color = Color.Green
+                    )
+                }
+                else {
+                    Text(
+                        text = obstacle.id.toString(),
+                        color = Color.Green
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
