@@ -450,6 +450,12 @@ class BluetoothService(
                             y = result["y"]!!.toInt(),
                             facing = result["facing"]!!
                         )
+                    else if (result["type"] == "target") {
+                        arenaViewModel.setObstacleValue(
+                            id = result["id"]!!.toInt(),
+                            value = result["value"]!!
+                        )
+                    }
                     bluetoothViewModel.addReceivedMessage(result["msg"]!!)
                 } catch (e: IOException) {
                     Log.e(TAG, "disconnected", e)

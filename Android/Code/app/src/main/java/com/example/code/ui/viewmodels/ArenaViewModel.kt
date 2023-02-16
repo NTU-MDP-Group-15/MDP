@@ -111,6 +111,26 @@ class ArenaViewModel : ViewModel() {
         }
     }
 
+    // Set Obstacle Value
+    fun setObstacleValue(id: Int, value: String) {
+        val obs = _uiState.value.obstacles.filter { obs -> obs.id == id }
+        val ob = obs.first()
+        val obstacles = _uiState.value.obstacles.filter { obs -> obs.id != id }
+        _uiState.update { currentState ->
+            currentState.copy(
+                obstacles = obstacles.plus(
+                    Obstacle(
+                        id = id,
+                        xPos = ob.xPos,
+                        yPos = ob.yPos,
+                        facing = ob.facing,
+                        value = value
+                    )
+                ),
+            )
+        }
+    }
+
     // Set Robot Position and Facing
     fun setRobotPosFacing(x: Int, y: Int, facing: String) {
         _uiState.update { currentState ->

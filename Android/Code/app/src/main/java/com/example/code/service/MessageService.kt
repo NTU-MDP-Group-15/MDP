@@ -13,7 +13,7 @@ class MessageService {
             var parsedMsg = ""
             when (tag) {
                 "[C4]" -> parsedMsg = parseRobotStatus(list)
-                "[C9]" -> parsedMsg = parseTargetIDFound(list)
+                "[C9]" -> parsedMsg = parseTargetIDFound(list, result)
                 "[C10]" -> parsedMsg = parseRobotPosFacing(list, result)
                 else -> {
                     Log.d("MessageService", "Unknown Format: $msg")
@@ -82,9 +82,12 @@ class MessageService {
         // C9: Display Target ID Found
         // [Tag], Obstacle_ID, Target
         // [Tag], Obstacle_ID, Target, Facing
-        private fun parseTargetIDFound(list: List<String>): String {
+        private fun parseTargetIDFound(list: List<String>, result: HashMap<String, String>): String {
             val id = list[1]
             val targetValue = list[2]
+            result.replace("type", "target")
+            result["id"] = id
+            result["value"] = targetValue
             var parsedMsg = "Obstacle ID: $id has a target value of $targetValue"
             if (list.size == 4) {
                 parsedMsg += " and a facing of ${list[3]}"
