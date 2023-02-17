@@ -70,7 +70,11 @@ fun ArenaScreen(
             TaskModeInput(viewModel = viewModel, arenaUiState = arenaUiState)
             GridSizeInput(viewModel = viewModel, arenaUiState = arenaUiState)
             SetRobotOrientation(viewModel = viewModel, arenaUiState = arenaUiState)
-            ObstacleInput(viewModel = viewModel, arenaUiState = arenaUiState)
+            ObstacleInput(
+                viewModel = viewModel,
+                arenaUiState = arenaUiState,
+                bluetoothService = bluetoothService
+            )
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             ClearObstacles(viewModel = viewModel)
 
@@ -554,7 +558,11 @@ fun GridSizeInput(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
 }
 
 @Composable
-fun ObstacleInput(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
+fun ObstacleInput(
+    viewModel: ArenaViewModel,
+    arenaUiState: ArenaUiState,
+    bluetoothService: BluetoothService
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -583,6 +591,13 @@ fun ObstacleInput(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
             if (obstacle != null) {
                 LaunchedEffect(key1 = obstacle) {
                     viewModel.removeObstacle(obstacleID = obstacle.id)
+                    MessageService.sendObstaclePlacement(
+                        bts = bluetoothService,
+                        action = "SUB",
+                        id = obstacle.id,
+                        x = obstacle.xPos!!,
+                        y = obstacle.yPos!!
+                    )
                 }
             }
             if (isInBound) {
