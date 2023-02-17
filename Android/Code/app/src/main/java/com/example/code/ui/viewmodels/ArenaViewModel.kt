@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.code.service.BluetoothService
+import com.example.code.service.MessageService
 import com.example.code.ui.states.ArenaUiState
 import com.example.code.ui.states.Obstacle
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +42,15 @@ class ArenaViewModel : ViewModel() {
         _uiState.update { currentState -> currentState.copy(taskMode = taskMode) }
     }
 
+    // Reposition Obstacle
+    fun repositionObstacle(obstacle: Obstacle) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                obstacles = _uiState.value.obstacles.plus(obstacle),
+            )
+        }
+    }
+
     // Add Obstacle
     fun addObstacle(obstacle: Obstacle) {
         _uiState.update { currentState ->
@@ -50,7 +61,7 @@ class ArenaViewModel : ViewModel() {
         }
     }
 
-    fun changeObstacleFacing(obstacle: Obstacle) {
+    fun changeObstacleFacing(obstacle: Obstacle, bluetoothService: BluetoothService) {
         val obstacles = _uiState.value.obstacles.filter { obs -> obs.id != obstacle.id }
         if (obstacle.facing == "N") {
             val newObstacle =
@@ -62,6 +73,11 @@ class ArenaViewModel : ViewModel() {
                     )
                 )
             }
+            MessageService.sendObstacleFacing(
+                bts = bluetoothService,
+                id = obstacle.id,
+                facing = "E"
+            )
         } else if (obstacle.facing == "E") {
             val newObstacle =
                 Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "S", obstacle.value)
@@ -72,6 +88,11 @@ class ArenaViewModel : ViewModel() {
                     )
                 )
             }
+            MessageService.sendObstacleFacing(
+                bts = bluetoothService,
+                id = obstacle.id,
+                facing = "S"
+            )
         } else if (obstacle.facing == "S") {
             val newObstacle =
                 Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "W", obstacle.value)
@@ -82,6 +103,11 @@ class ArenaViewModel : ViewModel() {
                     )
                 )
             }
+            MessageService.sendObstacleFacing(
+                bts = bluetoothService,
+                id = obstacle.id,
+                facing = "W"
+            )
         } else if (obstacle.facing == "W") {
             val newObstacle =
                 Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "N", obstacle.value)
@@ -92,6 +118,11 @@ class ArenaViewModel : ViewModel() {
                     )
                 )
             }
+            MessageService.sendObstacleFacing(
+                bts = bluetoothService,
+                id = obstacle.id,
+                facing = "N"
+            )
         }
     }
 

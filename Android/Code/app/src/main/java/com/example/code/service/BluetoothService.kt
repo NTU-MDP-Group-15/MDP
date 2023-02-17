@@ -270,7 +270,7 @@ class BluetoothService(
             }
             mmServerSocket = tmp
             mState = STATE_LISTEN
-//            mAdapter.name = DEVICE_NAME
+            mAdapter.name = DEVICE_NAME
             Log.i(TAG, "mAcceptThread Initialised")
         }
 

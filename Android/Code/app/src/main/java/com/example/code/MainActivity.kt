@@ -129,7 +129,8 @@ class MainActivity : ComponentActivity() {
                                 }
                                 composable(route = "Arena") {
                                     ArenaScreen(
-                                        viewModel = arenaViewModel
+                                        viewModel = arenaViewModel,
+                                        bluetoothService = bluetoothService
                                     )
                                 }
                                 composable(route = "Debug") {

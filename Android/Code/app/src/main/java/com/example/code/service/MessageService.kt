@@ -68,14 +68,14 @@ class MessageService {
         // C6: Obstacle Placement
         // [Tag], Action, Obstacle_ID, Obstacle_X_Coordinate, Obstacle_Y_Coordinate
         fun sendObstaclePlacement(bts: BluetoothService, action: String, id: Int, x: Int, y: Int) {
-            val msg = "[C6], $action, $id, $x, $y"
+            val msg = "[C6] $action $id $x $y"
             bts.write(toByteArray(msg))
         }
 
         // C7: Obstacle Image Facing
         // [Tag], Obstacle_ID, Facing
         fun sendObstacleFacing(bts: BluetoothService, id: Int, facing: String) {
-            val msg = "[C7], $id, $facing"
+            val msg = "[C7] $id $facing"
             bts.write(toByteArray(msg))
         }
 

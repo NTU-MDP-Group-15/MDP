@@ -27,6 +27,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.code.service.BluetoothService
+import com.example.code.service.MessageService
 import com.example.code.ui.states.ArenaUiState
 import com.example.code.ui.states.Obstacle
 import com.example.code.ui.viewmodels.ArenaViewModel
@@ -36,7 +38,8 @@ val spacerDP = 10.dp
 
 @Composable
 fun ArenaScreen(
-    viewModel: ArenaViewModel
+    viewModel: ArenaViewModel,
+    bluetoothService: BluetoothService
 ) {
     val arenaUiState by viewModel.uiState.collectAsState()
 
@@ -48,7 +51,11 @@ fun ArenaScreen(
                 .fillMaxWidth(0.55f)
                 .fillMaxHeight(1f)
         ) {
-            ArenaGrid(arenaUiState = arenaUiState, viewModel = viewModel)
+            ArenaGrid(
+                arenaUiState = arenaUiState,
+                viewModel = viewModel,
+                bluetoothService = bluetoothService
+            )
         }
 
         // Config
@@ -90,7 +97,11 @@ fun StatusDisplay(arenaUiState: ArenaUiState) {
 }
 
 @Composable
-fun ArenaGrid(arenaUiState: ArenaUiState, viewModel: ArenaViewModel) {
+fun ArenaGrid(
+    arenaUiState: ArenaUiState,
+    viewModel: ArenaViewModel,
+    bluetoothService: BluetoothService
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -113,7 +124,8 @@ fun ArenaGrid(arenaUiState: ArenaUiState, viewModel: ArenaViewModel) {
                                     viewModel = viewModel,
                                     xCoord = i,
                                     yCoord = j,
-                                    arenaUiState = arenaUiState
+                                    arenaUiState = arenaUiState,
+                                    bluetoothService = bluetoothService
                                 )
                             }
                         } else {
@@ -121,7 +133,8 @@ fun ArenaGrid(arenaUiState: ArenaUiState, viewModel: ArenaViewModel) {
                                 viewModel = viewModel,
                                 xCoord = i,
                                 yCoord = j,
-                                arenaUiState = arenaUiState
+                                arenaUiState = arenaUiState,
+                                bluetoothService = bluetoothService
                             )
                         }
                     }
@@ -138,6 +151,7 @@ fun ArenaGrid(arenaUiState: ArenaUiState, viewModel: ArenaViewModel) {
 @Composable
 fun GridBox(
     viewModel: ArenaViewModel,
+    bluetoothService: BluetoothService,
     arenaUiState: ArenaUiState,
     xCoord: Int,
     yCoord: Int,
@@ -148,15 +162,24 @@ fun GridBox(
         val self =
             arenaUiState.obstacles.filter { obs -> (obs.xPos == xCoord) && (obs.yPos == yCoord) }
         if (self.isNotEmpty()) {
-            drawObstacle(obstacle = self.first(), viewModel = viewModel)
+            drawObstacle(
+                obstacle = self.first(),
+                viewModel = viewModel,
+                bluetoothService = bluetoothService
+            )
         } else {
             if (obstacle != null) {
                 LaunchedEffect(key1 = obstacle) {
-                    if (obstacle.xPos != null) {
-                        println("$xCoord, $yCoord: $obstacle")
+                    if (obstacle.xPos != null && obstacle.xPos != xCoord) {
                         viewModel.removeObstacle(obstacleID = obstacle.id)
-                        println("$xCoord, $yCoord: After removing ${obstacle.id}: ${arenaUiState.obstacles}")
-                        viewModel.addObstacle(
+                        MessageService.sendObstaclePlacement(
+                            bts = bluetoothService,
+                            action = "SUB",
+                            id = obstacle.id,
+                            x = obstacle.xPos,
+                            y = obstacle.yPos!!
+                        )
+                        viewModel.repositionObstacle(
                             Obstacle(
                                 id = obstacle.id,
                                 xPos = xCoord,
@@ -164,15 +187,40 @@ fun GridBox(
                                 facing = obstacle.facing
                             )
                         )
-                        println("$xCoord, $yCoord: After Adding ${obstacle.id}: ${arenaUiState.obstacles}")
+                        MessageService.sendObstaclePlacement(
+                            bts = bluetoothService,
+                            action = "ADD",
+                            id = obstacle.id,
+                            x = xCoord,
+                            y = yCoord
+                        )
+                        MessageService.sendObstacleFacing(
+                            bts = bluetoothService,
+                            id = obstacle.id,
+                            facing = obstacle.facing!!
+                        )
+                    } else if (obstacle.xPos != null) {
                     } else {
+                        val id = arenaUiState.nextObsID
                         viewModel.addObstacle(
                             Obstacle(
-                                id = arenaUiState.nextObsID,
+                                id = id,
                                 xPos = xCoord,
                                 yPos = yCoord,
                                 facing = "N"
                             )
+                        )
+                        MessageService.sendObstaclePlacement(
+                            bts = bluetoothService,
+                            action = "ADD",
+                            id = id,
+                            x = xCoord,
+                            y = yCoord
+                        )
+                        MessageService.sendObstacleFacing(
+                            bts = bluetoothService,
+                            id = id,
+                            facing = "N"
                         )
                     }
 
@@ -203,6 +251,7 @@ fun GridBox(
 fun drawObstacle(
     obstacle: Obstacle,
     viewModel: ArenaViewModel,
+    bluetoothService: BluetoothService
 ) {
     if (obstacle.facing == "N") {
         Box(
@@ -212,7 +261,7 @@ fun drawObstacle(
                 .aspectRatio(1f)
                 .background(Color.Black)
                 .clickable {
-                    viewModel.changeObstacleFacing(obstacle)
+                    viewModel.changeObstacleFacing(obstacle, bluetoothService)
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -223,13 +272,12 @@ fun drawObstacle(
                     .align(Alignment.TopCenter)
                     .background(Color.Red)
             ) {}
-            if (obstacle.value!=null) {
+            if (obstacle.value != null) {
                 Text(
                     text = obstacle.value,
                     color = Color.Green
                 )
-            }
-            else {
+            } else {
                 Text(
                     text = obstacle.id.toString(),
                     color = Color.Green
@@ -248,7 +296,7 @@ fun drawObstacle(
                 .aspectRatio(1f)
                 .background(Color.Black)
                 .clickable {
-                    viewModel.changeObstacleFacing(obstacle)
+                    viewModel.changeObstacleFacing(obstacle, bluetoothService)
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -259,13 +307,12 @@ fun drawObstacle(
                     .align(Alignment.BottomCenter)
                     .background(Color.Red)
             ) {}
-            if (obstacle.value!=null) {
+            if (obstacle.value != null) {
                 Text(
                     text = obstacle.value,
                     color = Color.Green
                 )
-            }
-            else {
+            } else {
                 Text(
                     text = obstacle.id.toString(),
                     color = Color.Green
@@ -283,17 +330,16 @@ fun drawObstacle(
                     .aspectRatio(1f)
                     .background(Color.Black)
                     .clickable {
-                        viewModel.changeObstacleFacing(obstacle)
+                        viewModel.changeObstacleFacing(obstacle, bluetoothService)
                     },
                 contentAlignment = Alignment.Center
             ) {
-                if (obstacle.value!=null) {
+                if (obstacle.value != null) {
                     Text(
                         text = obstacle.value,
                         color = Color.Green
                     )
-                }
-                else {
+                } else {
                     Text(
                         text = obstacle.id.toString(),
                         color = Color.Green
@@ -319,17 +365,16 @@ fun drawObstacle(
                     .aspectRatio(1f)
                     .background(Color.Black)
                     .clickable {
-                        viewModel.changeObstacleFacing(obstacle)
+                        viewModel.changeObstacleFacing(obstacle, bluetoothService)
                     },
                 contentAlignment = Alignment.Center
             ) {
-                if (obstacle.value!=null) {
+                if (obstacle.value != null) {
                     Text(
                         text = obstacle.value,
                         color = Color.Green
                     )
-                }
-                else {
+                } else {
                     Text(
                         text = obstacle.id.toString(),
                         color = Color.Green
