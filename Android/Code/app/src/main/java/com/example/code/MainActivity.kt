@@ -28,7 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.code.service.BluetoothService
 import com.example.code.ui.navigation.NavRailItems
 import com.example.code.ui.screens.arena.ArenaScreen
-import com.example.code.ui.screens.arena.DragableScreen
+import com.example.code.ui.screens.arena.DraggableScreen
 import com.example.code.ui.screens.bluetooth.BluetoothScreen
 import com.example.code.ui.screens.debug.DebugScreen
 import com.example.code.ui.theme.CodeTheme
@@ -107,7 +107,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    DragableScreen(
+                    DraggableScreen(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         Row {
