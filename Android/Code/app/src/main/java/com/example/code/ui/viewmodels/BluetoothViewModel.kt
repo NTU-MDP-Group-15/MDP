@@ -36,7 +36,7 @@ class BluetoothViewModel : ViewModel() {
 
     fun addRobotStatusMessage(message: String) {
         _uiState.update {currentState ->
-            currentState.copy(robotStatusMessages = _uiState.value.robotStatusMessages.plus(message))
+            currentState.copy(robotStatusMessages = message)
         }
     }
 }
