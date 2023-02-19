@@ -19,5 +19,5 @@ data class Obstacle(
     val xPos: Int? = null,
     val yPos: Int? = null,
     var facing: String? = null,
-    val value: String? = null
+    val value: Int? = null
 )

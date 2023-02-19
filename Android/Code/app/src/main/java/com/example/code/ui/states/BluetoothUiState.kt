@@ -4,5 +4,6 @@ import android.bluetooth.BluetoothDevice
 
 data class BluetoothUiState(
     val discoveredDevices: Set<BluetoothDevice> = emptySet(),
-    val receivedMessages: String = ""
+    val receivedMessages: String = "",
+    val robotStatusMessages: String = ""
 )

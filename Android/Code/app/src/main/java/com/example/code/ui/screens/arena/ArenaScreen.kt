@@ -68,8 +68,8 @@ fun ArenaScreen(
             StatusDisplay(arenaUiState = arenaUiState)
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             TaskModeInput(viewModel = viewModel, arenaUiState = arenaUiState)
-            GridSizeInput(viewModel = viewModel, arenaUiState = arenaUiState)
-            SetRobotOrientation(viewModel = viewModel, arenaUiState = arenaUiState)
+            //GridSizeInput(viewModel = viewModel, arenaUiState = arenaUiState)
+            //SetRobotOrientation(viewModel = viewModel, arenaUiState = arenaUiState)
             ObstacleInput(
                 viewModel = viewModel,
                 arenaUiState = arenaUiState,
@@ -77,13 +77,8 @@ fun ArenaScreen(
             )
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             ClearObstacles(viewModel = viewModel)
-
-            Button(onClick = { println(arenaUiState.obstacles) }) {
-                Text(text = "Test")
-            }
-            Button(onClick = { viewModel.removeObstacle(1) }) {
-                Text(text = "Remove")
-            }
+            Spacer(modifier = Modifier.padding(bottom = spacerDP))
+            robotStatus(viewModel = BluetoothViewModel())
         }
     }
 }
@@ -278,7 +273,7 @@ fun drawObstacle(
             ) {}
             if (obstacle.value != null) {
                 Text(
-                    text = obstacle.value,
+                    text = obstacle.value.toString(),
                     color = Color.Green
                 )
             } else {
@@ -313,7 +308,7 @@ fun drawObstacle(
             ) {}
             if (obstacle.value != null) {
                 Text(
-                    text = obstacle.value,
+                    text = obstacle.value.toString(),
                     color = Color.Green
                 )
             } else {
@@ -340,7 +335,7 @@ fun drawObstacle(
             ) {
                 if (obstacle.value != null) {
                     Text(
-                        text = obstacle.value,
+                        text = obstacle.value.toString(),
                         color = Color.Green
                     )
                 } else {
@@ -375,7 +370,7 @@ fun drawObstacle(
             ) {
                 if (obstacle.value != null) {
                     Text(
-                        text = obstacle.value,
+                        text = obstacle.value.toString(),
                         color = Color.Green
                     )
                 } else {
@@ -398,7 +393,7 @@ fun drawObstacle(
 }
 
 @Composable
-fun drawRobot(
+fun  drawRobot(
     Orientation: String,
 ) {
     Box(
@@ -630,10 +625,6 @@ fun ClearObstacles(viewModel: ArenaViewModel) {
         Text(text = "Remove all obstacles: ", fontWeight = FontWeight.Bold)
         Button(
             onClick = { viewModel.removeAllObstacles() },
-            modifier = Modifier
-                .size(100.dp)
-                .shadow(5.dp)
-                .background(Color.Black),
         ) {
             Text(text = "Clear all")
         }
@@ -661,7 +652,7 @@ fun SetRobotOrientation(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
             onValueChange = { newX: String ->
                 if (newX != "") {
                     val w = newX.toInt()
-                    if (w in 0..20) {
+                    if (w in 0..19) {
                         viewModel.setRobotPosFacing(
                             x = w,
                             y = arenaUiState.robotPosY,
@@ -702,3 +693,21 @@ fun SetRobotOrientation(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
         )
     }
 }
+
+@Composable
+fun robotStatus(
+    viewModel: BluetoothViewModel
+) {
+    val bluetoothUiState by viewModel.uiState.collectAsState()
+
+    Text(text = "Robot Status", fontSize = 20.sp)
+    TextField(
+        modifier = Modifier
+            .fillMaxHeight(0.4f)
+            .fillMaxWidth(1f),
+        value = bluetoothUiState.robotStatusMessages,
+        onValueChange = {},
+        readOnly = true
+    )
+}
+
