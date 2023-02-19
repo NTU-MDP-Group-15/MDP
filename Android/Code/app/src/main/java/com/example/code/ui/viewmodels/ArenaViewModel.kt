@@ -104,17 +104,17 @@ class ArenaViewModel : ViewModel() {
 
     // Set Obstacle Value
     fun setObstacleValue(id: Int, value: Int) {
-        val obs = _uiState.value.obstacles.filter { obs -> obs.id == id }
-        val ob = obs.first()
-        val obstacles = _uiState.value.obstacles.filter { obs -> obs.id != id }
+        val tmp = _uiState.value.obstacles.filter { it.id == id }
+        val obstacle = tmp.first()
+        val restObstacles = _uiState.value.obstacles.filter { it.id != id }
         _uiState.update { currentState ->
             currentState.copy(
-                obstacles = obstacles.plus(
+                obstacles = restObstacles.plus(
                     Obstacle(
                         id = id,
-                        xPos = ob.xPos,
-                        yPos = ob.yPos,
-                        facing = ob.facing,
+                        xPos = obstacle.xPos,
+                        yPos = obstacle.yPos,
+                        facing = obstacle.facing,
                         value = value
                     )
                 ),
