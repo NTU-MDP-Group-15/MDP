@@ -23,7 +23,6 @@ import com.example.code.service.MessageService
 import com.example.code.ui.states.ArenaUiState
 import com.example.code.ui.states.Obstacle
 import com.example.code.ui.viewmodels.ArenaViewModel
-import com.example.code.ui.viewmodels.BluetoothViewModel
 
 val spacerDP = 10.dp
 
@@ -69,7 +68,7 @@ fun ArenaScreen(
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             ClearObstacles(viewModel = viewModel)
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
-            RobotStatus(viewModel = BluetoothViewModel())
+            RobotStatus(arenaUiState = arenaUiState)
         }
     }
 }
@@ -590,16 +589,14 @@ fun SetRobotOrientation(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
 
 @Composable
 fun RobotStatus(
-    viewModel: BluetoothViewModel
+    arenaUiState: ArenaUiState
 ) {
-    val bluetoothUiState by viewModel.uiState.collectAsState()
-
     Text(text = "Robot Status", fontSize = 20.sp)
     TextField(
         modifier = Modifier
             .fillMaxHeight(0.4f)
             .fillMaxWidth(1f),
-        value = bluetoothUiState.robotStatusMessages,
+        value = arenaUiState.robotStatusMessage,
         onValueChange = {},
         readOnly = true
     )
