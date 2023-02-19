@@ -6,18 +6,16 @@ class MessageService {
     companion object {
         fun parseMessage(buffer: ByteArray, bytes: Int): HashMap<String, String> {
             // Note to change protocol for checklist
-            val result = hashMapOf("type" to "status")
+            val result = HashMap<String, String>()
             val msg = String(buffer, 0, bytes)
             val list: List<String> = msg.split(" ")
-            val tag: String = list[0]
-            var parsedMsg: String
-            when (tag) {
-                "[C4]" -> parsedMsg = parseRobotStatus(list)
-                "[C9]" -> parsedMsg = parseTargetIDFound(list, result)
-                "[C10]" -> parsedMsg = parseRobotPosFacing(list, result)
+
+            var parsedMsg: String = when (list[0]) {
+                "[C4]" -> parseRobotStatus(list, result)
+                "[C9]" -> parseTargetIDFound(list, result)
+                "[C10]" -> parseRobotPosFacing(list, result)
                 else -> {
-                    Log.d("MessageService", "Unknown Format: $msg")
-                    parsedMsg = msg
+                    msg
                 }
             }
             parsedMsg += "\n"
@@ -38,11 +36,9 @@ class MessageService {
         [C4] IMG M (running model on picture)
         [C4] TAR 1 (heading to target 1)
          */
-        private fun parseRobotStatus(list: List<String>): String {
+        private fun parseRobotStatus(list: List<String>, result: HashMap<String, String>): String {
             val action = list[1]
             val value = list[2]
-            //
-            Log.d("", value)
             var parsedMsg = ""
             when (action) {
                 "MOV" -> {
@@ -81,31 +77,43 @@ class MessageService {
 
         // C9: Display Target ID Found
         // [Tag], Obstacle_ID, Target
-        // [Tag], Obstacle_ID, Target, Facing
-        private fun parseTargetIDFound(list: List<String>, result: HashMap<String, String>): String {
-            val id = list[1]
-            val targetValue = list[2]
-            result.replace("type", "target")
-            result["id"] = id
-            result["value"] = targetValue
-            var parsedMsg = "Obstacle ID: $id has a target value of $targetValue"
-            if (list.size == 4) {
-                parsedMsg += " and a facing of ${list[3]}"
+        private fun parseTargetIDFound(
+            list: List<String>,
+            result: HashMap<String, String>
+        ): String {
+            val validIDs = (1..40).toList()
+            result["id"] = list[1]
+            result["value"] = list[2]
+            if (validIDs.contains(result["value"]!!.toInt())) {
+                result["TAG"] = "C9"
             }
-            return parsedMsg
+            else {
+                result["TAG"] = "Error"
+            }
+            return "Invalid Image Target ID"
         }
 
         // C10: Robot Position and Facing
         // [Tag], Robot_X_Coordinate, Robot_Y_Coordinate, Facing
-        private fun parseRobotPosFacing(list: List<String>, result: HashMap<String, String>): String {
-            val x = list[1]
-            val y = list[2]
-            val facing = list[3]
-            result.replace("type", "robot")
-            result["x"] = x
-            result["y"] = y
-            result["facing"] = facing
-            return "Robot is currently at ($x, $y), facing $facing"
+        private fun parseRobotPosFacing(
+            list: List<String>,
+            result: HashMap<String, String>
+        ): String {
+            val validCoordinates = (1..19).toList()
+            val validFacings = listOf("N", "S", "E", "W")
+            result["x"] = list[1]
+            result["y"] = list[2]
+            result["facing"] = list[3]
+            if (
+                (validCoordinates.contains(result["x"]!!.toInt())) &&
+                (validCoordinates.contains(result["y"]!!.toInt())) &&
+                (validFacings.contains(result["facing"]!!))
+            ) {
+                result["TAG"] = "C10"
+            } else {
+                result["TAG"] = "Error"
+            }
+            return "Invalid Robot Position or Facing"
         }
     }
 }

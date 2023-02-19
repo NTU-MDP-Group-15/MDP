@@ -426,13 +426,6 @@ class BluetoothService(
             Log.i(TAG, "ConnectedThread Initialised")
         }
 
-        fun checkRobotBounds(coordinate: Int) : Boolean {
-            if (coordinate in 0 until 20) {
-                return true
-            }
-            return false
-        }
-
         override fun run() {
             Log.d(TAG, "mConnectedThread Running: $this")
             val buffer = ByteArray(1024)
@@ -443,45 +436,30 @@ class BluetoothService(
                     // Read from the InputStream
                     val bytes = mmInStream!!.read(buffer)
                     val result: HashMap<String, String> = MessageService.parseMessage(buffer, bytes)
-                    if (result["type"] == "robot") {
-                        if (checkRobotBounds(result["x"]!!.toInt())
-                            && checkRobotBounds(result["y"]!!.toInt())) {
+                    when (result["TAG"]) {
+                        "C4" -> {
+                            arenaViewModel.setRobotStatusMessage(result["msg"]!!)
+                        }
+                        "C9" -> {
+                            arenaViewModel.setObstacleValue(
+                                id = result["id"]!!.toInt(),
+                                value = result["value"]!!.toInt()
+                            )
+                        }
+                        "C10" -> {
                             arenaViewModel.setRobotPosFacing(
                                 x = result["x"]!!.toInt(),
                                 y = result["y"]!!.toInt(),
                                 facing = result["facing"]!!
                             )
                         }
-                        else {
-                            bluetoothViewModel.addReceivedMessage("Invalid Coordinates!!!")
-                        }
+                        else -> bluetoothViewModel.addReceivedMessage(result["msg"]!!)
                     }
-                    else if (result["type"] == "target") {
-                        if (checkValidValue(result["value"]!!.toInt())!=null) {
-                            arenaViewModel.setObstacleValue(
-                                id = result["id"]!!.toInt(),
-                                value = result["value"]!!.toInt()
-                            )
-                        }
-                        else {
-                            bluetoothViewModel.addReceivedMessage("Invalid Image Value!!")
-                        }
-                    }
-                    bluetoothViewModel.addReceivedMessage(result["msg"]!!)
                 } catch (e: IOException) {
                     Log.e(TAG, "disconnected", e)
                     connectionLost()
                     break
                 }
-            }
-        }
-
-        fun checkValidValue(value: Int): Int? {
-            if (value>=11 && value<=40) {
-                return value
-            }
-            else {
-                return null
             }
         }
 
