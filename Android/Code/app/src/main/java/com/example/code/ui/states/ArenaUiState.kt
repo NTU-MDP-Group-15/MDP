@@ -11,7 +11,9 @@ data class ArenaUiState(
 
     val robotPosX: Int = 0,
     val robotPosY: Int = 0,
-    val robotFacing: String = "N"
+    val robotFacing: String = "N",
+
+    val robotStatusMessage: String = ""
 )
 
 data class Obstacle(

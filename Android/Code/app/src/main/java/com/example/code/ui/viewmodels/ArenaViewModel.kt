@@ -132,4 +132,11 @@ class ArenaViewModel : ViewModel() {
             )
         }
     }
+
+    // Set Robot Status Message
+    fun setRobotStatusMessage(message: String) {
+        _uiState.update {currentState ->
+            currentState.copy(robotStatusMessage = message)
+        }
+    }
 }
