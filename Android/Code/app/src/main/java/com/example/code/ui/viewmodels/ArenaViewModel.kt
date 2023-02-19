@@ -1,9 +1,5 @@
 package com.example.code.ui.viewmodels
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.code.service.BluetoothService
 import com.example.code.service.MessageService
@@ -63,67 +59,31 @@ class ArenaViewModel : ViewModel() {
 
     fun changeObstacleFacing(obstacle: Obstacle, bluetoothService: BluetoothService) {
         val obstacles = _uiState.value.obstacles.filter { obs -> obs.id != obstacle.id }
-        if (obstacle.facing == "N") {
-            val newObstacle =
-                Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "E", obstacle.value)
-            _uiState.update { currentState ->
-                currentState.copy(
-                    obstacles = obstacles.plus(
-                        newObstacle
+        var facing = ""
+        when (obstacle.facing) {
+            "N" -> facing = "E"
+            "E" -> facing = "S"
+            "S" -> facing = "W"
+            "W" -> facing = "N"
+        }
+        _uiState.update { currentState ->
+            currentState.copy(
+                obstacles = obstacles.plus(
+                    Obstacle(
+                        id = obstacle.id,
+                        xPos = obstacle.xPos,
+                        yPos = obstacle.yPos,
+                        facing = facing,
+                        value = obstacle.value
                     )
                 )
-            }
-            MessageService.sendObstacleFacing(
-                bts = bluetoothService,
-                id = obstacle.id,
-                facing = "E"
-            )
-        } else if (obstacle.facing == "E") {
-            val newObstacle =
-                Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "S", obstacle.value)
-            _uiState.update { currentState ->
-                currentState.copy(
-                    obstacles = obstacles.plus(
-                        newObstacle
-                    )
-                )
-            }
-            MessageService.sendObstacleFacing(
-                bts = bluetoothService,
-                id = obstacle.id,
-                facing = "S"
-            )
-        } else if (obstacle.facing == "S") {
-            val newObstacle =
-                Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "W", obstacle.value)
-            _uiState.update { currentState ->
-                currentState.copy(
-                    obstacles = obstacles.plus(
-                        newObstacle
-                    )
-                )
-            }
-            MessageService.sendObstacleFacing(
-                bts = bluetoothService,
-                id = obstacle.id,
-                facing = "W"
-            )
-        } else if (obstacle.facing == "W") {
-            val newObstacle =
-                Obstacle(obstacle.id, obstacle.xPos, obstacle.yPos, "N", obstacle.value)
-            _uiState.update { currentState ->
-                currentState.copy(
-                    obstacles = obstacles.plus(
-                        newObstacle
-                    )
-                )
-            }
-            MessageService.sendObstacleFacing(
-                bts = bluetoothService,
-                id = obstacle.id,
-                facing = "N"
             )
         }
+        MessageService.sendObstacleFacing(
+            bts = bluetoothService,
+            id = obstacle.id,
+            facing = facing
+        )
     }
 
     // Remove Obstacle
