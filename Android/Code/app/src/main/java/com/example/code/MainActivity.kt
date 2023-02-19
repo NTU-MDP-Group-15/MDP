@@ -14,12 +14,10 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -158,35 +156,3 @@ class MainActivity : ComponentActivity() {
         unregisterReceiver(bluetoothService.receiver)
     }
 }
-
-//import android.os.Bundle
-//import androidx.activity.ComponentActivity
-//import androidx.activity.compose.setContent
-//import androidx.compose.foundation.background
-//import androidx.compose.foundation.layout.*
-//import androidx.compose.ui.Modifier
-//import androidx.compose.ui.graphics.Color
-//import com.example.code.ui.screens.arena.DragableScreen
-//import com.example.code.ui.screens.arena.MainScreen
-//import com.example.code.ui.theme.CodeTheme
-//import com.example.code.ui.viewmodels.MainViewModel
-//
-//class MainActivity : ComponentActivity() {
-//
-//    private val viewModel = MainViewModel()
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        val mainViewModel = MainViewModel()
-//        setContent {
-//            CodeTheme {
-//                DragableScreen(
-//                    modifier = Modifier
-//                        .fillMaxSize()
-//                        .background(Color.Black.copy(0.8f))
-//                ) {
-//                    MainScreen(viewModel)
-//                }
-//            }
-//        }
-//    }
-//}
