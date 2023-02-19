@@ -86,14 +86,6 @@ class BluetoothService(
     }
 
     /**
-     * Update UI status according to current state of connection
-     */
-    @Synchronized
-    fun updateUI() {
-        // TODO
-    }
-
-    /**
      * Scan for bluetooth devices
      */
     @SuppressLint("MissingPermission")

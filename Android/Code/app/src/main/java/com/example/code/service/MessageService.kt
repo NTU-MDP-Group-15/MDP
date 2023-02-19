@@ -6,11 +6,11 @@ class MessageService {
     companion object {
         fun parseMessage(buffer: ByteArray, bytes: Int): HashMap<String, String> {
             // Note to change protocol for checklist
-            val result = hashMapOf<String, String>("type" to "status")
+            val result = hashMapOf("type" to "status")
             val msg = String(buffer, 0, bytes)
             val list: List<String> = msg.split(" ")
             val tag: String = list[0]
-            var parsedMsg = ""
+            var parsedMsg: String
             when (tag) {
                 "[C4]" -> parsedMsg = parseRobotStatus(list)
                 "[C9]" -> parsedMsg = parseTargetIDFound(list, result)
