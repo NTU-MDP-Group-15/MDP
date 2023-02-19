@@ -52,19 +52,19 @@ def capture_print_metadata(picam2):
     print(metadata)
     
 if __name__=="__main__":
-    picam2 = Picamera2()
-    still_config = picam2.create_still_configuration()
-    still_config["format"] = "XBGR8888"
-    print("config - ", still_config)
+    #picam2 = Picamera2()
+    #still_config = picam2.create_still_configuration()
+    #still_config["format"] = "XBGR8888"
+    #print("config - ", still_config)
     
-    picam2.configure(still_config)
+    #picam2.configure(still_config)
     
-    print("camera_controls - ", picam2.camera_controls)
+    #print("camera_controls - ", picam2.camera_controls)
     #for cont in picam2.camera_controls:
     #    print(cont)
     
-    #capture_still_image(picam2)
+    capture_still_image()
     #capture_still_image_switch(picam2)
     #capture_print_metadata(picam2)
     
-    picam2.close()
+    #picam2.close()

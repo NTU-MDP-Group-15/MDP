@@ -19,7 +19,6 @@ class BTServerInterface(threading.Thread):
     def __init__(self, name):
         super().__init__()
         os.system("sudo hciconfig hci0 piscan")
-        
         self.name = name
         #self.s_port = bt.PORT_ANY
         self.uuid = UUID
@@ -28,7 +27,7 @@ class BTServerInterface(threading.Thread):
         
     def run(self):
         print(f"[BT/INFO] Starting thread {self.name}")
-        connected = self.setup_connection()
+        connected = self.connect()
         if connected: self.listen()
         print("[BT/INFO] Disconnected")
         self.c_sock.close()
@@ -36,7 +35,7 @@ class BTServerInterface(threading.Thread):
         print("[BT/INFO] Closing thread")
         exit(1)
         
-    def setup_connection(self):
+    def connect(self) -> bool:
         """
             Function used to advertise device for other nodes to connect
         """
@@ -79,9 +78,9 @@ class BTServerInterface(threading.Thread):
                 print("[BT/INFO] KeyboardInterrupt received")
                 break
     
-    def send(self):
+    def send(self, data):
         self.c_sock.send("Pi: received\n")
-        print("[BT/INFO] sending receive")
+        print(f"[BT/INFO] sending {data}")
     
 class BTClientThread(threading.Thread):
     def __init__(self, name):
@@ -89,7 +88,7 @@ class BTClientThread(threading.Thread):
         self.name = name
         
     def run(self):
-        print(self.name)
+        print(name)
     
     def thread_proc(self):
         pass
