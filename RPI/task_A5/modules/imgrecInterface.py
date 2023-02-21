@@ -8,6 +8,8 @@ Class for setting up connection sockets for algo
 200223 - Added traceback for except
 210223 - Replaced self.disconnected_flag to self.kill_flag
          disconnect_flag is now local variable
+220223 - Updated imagezmq server logic
+
 '''
 import os
 import cv2
@@ -30,6 +32,11 @@ class ImageRecInterface(threading.Thread):
         self.img_format = img_format
         self.kill_flag = False
         #self.idx = self.get_file_count()
+        
+        self.zmq_sender = imagezmq.ImageSender(connect_to=f"tcp://192.168.15.69:{IMGREC_PORT}")
+        self.picam = cv2.VideoCapture(0)
+        self.picam.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
+        self.picam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
        
     def run(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as self.s_sock:
@@ -54,17 +61,16 @@ class ImageRecInterface(threading.Thread):
         _, _, files = next(os.walk(IMG_DIR))
         return len(files)
 
-    def take_picture(self, name="img{idx}.{img_format}"):
-        img_name = name.format(idx=self.idx, img_format=self.img_format)
+    def take_picture(self, no_of_pic=3, name="img{idx}.{img_format}"):
+        # img_name = name.format(idx=self.idx, img_format=self.img_format)
         if self.picam.isOpened():
-            _, frame = self.picam.read()
-            if _ and frame is not None:
-                cv2.imwrite(os.path.join(IMG_DIR, img_name), frame)
+            for _ in range(no_of_pic):
+                _, frame = self.picam.read()
+                if frame is not None:
+                    # cv2.imwrite(os.path.join(IMG_DIR, img_name), frame)
+                    self.zmq_sender.send_image("RPI", frame)
 
     def video(self):
-        self.picam = cv2.VideoCapture(0)
-        self.picam.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
-        self.picam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
         disconnect_flag = False
         while self.picam.isOpened() and not disconnect_flag:
             ret, frame = self.picam.read()

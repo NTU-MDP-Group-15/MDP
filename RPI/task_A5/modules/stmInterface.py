@@ -33,7 +33,6 @@ import traceback
 import threading
 from .helper import STM_IN, STM_OUT
 
-
 SERIAL_PORT = '/dev/ttyUSB0' 
 BAUD_RATE = 115200
 BYTESIZE = serial.EIGHTBITS     # or serial.FIVEBITS

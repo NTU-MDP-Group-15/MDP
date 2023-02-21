@@ -120,6 +120,7 @@ class MDPPi:
             instr = "02090,01015,03090,11035,16090"
             STM_OUT.put(instr)
         else:
+            pass
             
         
         #if to == "ANDROID": ANDROID_OUT.put(data)
