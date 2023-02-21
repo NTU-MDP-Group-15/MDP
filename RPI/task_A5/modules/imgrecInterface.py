@@ -6,7 +6,8 @@ Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
 180223 - Added imagezmq server to send images captured
 200223 - Added traceback for except
-
+210223 - Replaced self.disconnected_flag to self.kill_flag
+         disconnect_flag is now local variable
 '''
 import os
 import cv2
@@ -27,7 +28,7 @@ class ImageRecInterface(threading.Thread):
     def __init__(self, img_format="jpg"):
         super().__init__()
         self.img_format = img_format
-        self.disconnected_flag = False
+        self.kill_flag = False
         #self.idx = self.get_file_count()
        
     def run(self):
@@ -64,8 +65,8 @@ class ImageRecInterface(threading.Thread):
         self.picam = cv2.VideoCapture(0)
         self.picam.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
         self.picam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
-        
-        while self.picam.isOpened() and not self.disconnected_flag:
+        disconnect_flag = False
+        while self.picam.isOpened() and not disconnect_flag:
             ret, frame = self.picam.read()
             if ret == True:
                 # Display the resulting frame
@@ -87,24 +88,26 @@ class ImageRecInterface(threading.Thread):
         cv2.destroyAllWindows()
 
     def listener(self) -> "workerThread":
+        disconnect_flag = False
         print("[IMGREC/INFO] Starting listener thread")
-        while not self.disconnected_flag:
+        while not disconnect_flag and not self.kill_flag:
             try:
                 rcv_data = self.c_sock.recv(1024).decode()
                 if rcv_data:
                     print(f"[IMGREC/INFO] IMGREC received {rcv_data}")
                     IMGREC_IN.put(rcv_data)
             except KeyboardInterrupt:
-                self.disconnected_flag = True
+                disconnect_flag = True
             except:
-                self.disconnected_flag = True
+                disconnect_flag = True
                 traceback.print_exc()
                 pass
         print("[IMGREC/INFO] Exiting listener thread")
 
     def sender(self) -> "workerThread":
+        disconnect_flag = False
         print("[IMGREC/INFO] Starting sender thread")
-        while not self.disconnected_flag:
+        while not disconnect_flag and not self.kill_flag:
             try:
                 if not IMGREC_OUT.empty():
                     send_data = IMGREC_OUT.get().encode()

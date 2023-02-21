@@ -26,7 +26,7 @@ btInterface.py
 
 ! Updates (DDMMYY)
 200223 - Added logic for BT -> RPI -> STM
-
+210223 - Removed threading on MDPPi
 """
 import modules 
 import threading
@@ -34,13 +34,14 @@ import threading
 from modules.helper import STM_IN, ANDROID_IN, ALGO_IN, IMGREC_IN, \
                            STM_OUT, ANDROID_OUT, ALGO_OUT, IMGREC_OUT
 
-class MDPPi(threading.Thread):
+# class MDPPi(threading.Thread):
+class MDPPi:
     def __init__(self):
-        super().__init__()
+        # super().__init__()
         self.im_int = modules.ImageRecInterface()
         self.stm_int = modules.STMInterface()
         self.bt_int = modules.BTServerInterface(name="MDP-Pi BT Server")          # thread
-        #self.algoint = modules.AlgoServerInterface(name="MDP-Pi Algo Server")    # thread
+        #self.algo_int = modules.AlgoServerInterface(name="MDP-Pi Algo Server")    # thread
 
     def run(self):
         self.stm_int.start()
@@ -50,6 +51,21 @@ class MDPPi(threading.Thread):
         print("[PI/INFO] All devices connected successfully")
         pi_worker = threading.Thread(target=self.thread_proc)
         pi_worker.start()
+        
+    def start(self):
+        self.stm_int.start()
+        #self.im_int.start()
+        self.bt_int.start()
+
+        print("[PI/INFO] All devices connected successfully")
+        pi_worker = threading.Thread(target=self.thread_proc)
+        pi_worker.start()
+    
+    def kill_all_proc(self):
+        self.im_int.kill_flag = True
+        self.stm_int.kill_flag = True
+        # self.bt_int.kill_flag = True
+        # self.algo_int.kill_flag = True
         
     def thread_proc(self):        
         while True:
@@ -63,16 +79,21 @@ class MDPPi(threading.Thread):
                 if not IMGREC_IN.empty():
                     self.imgrec_data()
             except KeyboardInterrupt:
-                self.stm_int.disconnected_flag = True
+                self.im_int.kill_flag = True
+                self.stm_int.kill_flag = True
+                # self.stm_int.disconnected_flag = True
                 # self.im_int.disconnected_flag = True
                 break
     
     def stm_data(self):
         # data retrieved from queue is assumed to be in (TO, DATA)
-        to, data = STM_IN.get()
-        if to == "ANDROID": ANDROID_OUT.put(data)
-        if to == "ALGO": ALGO_OUT.put(data)
-        if to == "IMGREC": IMGREC_OUT.put(data)
+        # to, data = STM_IN.get()
+        # if to == "ANDROID": ANDROID_OUT.put(data)
+        # if to == "ALGO": ALGO_OUT.put(data)
+        # if to == "IMGREC": IMGREC_OUT.put(data)
+        data = STM_IN.get()
+        print(f"[PI/INFO] STM_IN: {data}")
+        # print(f"[PI/INFO] Putting '{data}' into ")
     
     def android_data(self):
         #to, data = STM_IN.get()
@@ -92,9 +113,14 @@ class MDPPi(threading.Thread):
     
     def imgrec_data(self):
         data = IMGREC_IN.get()
-        print(data)
-        #if data==0:
-        #    STM_OUT.put(instr)
+        print(f"[PI/INFO] IMGREC: {data}")
+        # image is bulleyes
+        if data==0:
+            # TASK1|[02090,01015,03090,11035,16090]
+            instr = "02090,01015,03090,11035,16090"
+            STM_OUT.put(instr)
+        else:
+            
         
         #if to == "ANDROID": ANDROID_OUT.put(data)
         #if to == "ALGO": ALGO_OUT.put(data)

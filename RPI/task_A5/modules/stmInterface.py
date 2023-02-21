@@ -7,6 +7,8 @@ Class for setting up connection sockets for algo
 200223 - Added Queue for task A5
          Added logic for BT -> RPI -> STM
          Added traceback for error
+210223 - Replaced self.disconnected_flag to self.kill_flag
+         disconnect_flag is now local variable
          
 -------------------------------------------------------------------
 | Command (5bit) |     Action                                     |
@@ -52,7 +54,7 @@ class STMInterface:
         self.timeout = timeout
         self.receive_flag = False
         self.complete_flag = False
-        self.disconnected_flag = False
+        self.kill_flag = False
         self.stm = None
         
     def start(self):
@@ -84,10 +86,9 @@ class STMInterface:
                                          stopbits=self.stopbits, 
                                          timeout=self.timeout)
                 print(f"[STM/INFO] Connected to STM via {self.port}")
-                #self.disconnected_flag = False
             except:
                 print(f"[STM/ERROR] Failed to connect on {self.port}")
-                self.disconnected_flag = True     
+                self.kill_flag = True     
                 traceback.print_exc()
                        
             finally:
@@ -102,8 +103,9 @@ class STMInterface:
             traceback.print_exc()
 
     def listener(self) -> "workerThread":
+        disconnect_flag = False
         print("[STM/INFO] Starting listener thread")
-        while not self.disconnected_flag:
+        while not disconnect_flag and not self.kill_flag:
             try:
                 rcv_data = int(self.stm.read().lstrip().rstrip())     # might not need lstrip/rstrip
                 print("[STM/INFO] STM received command")
@@ -114,14 +116,15 @@ class STMInterface:
                 
                 STM_IN.put(rcv_data)
             except KeyboardInterrupt:
-                self.disconnected_flag = True
+                disconnect_flag = True
             except:
                 pass
         print("[STM/INFO] Exiting listener thread")
 
     def sender(self) -> "workerThread":
+        disconnect_flag = False
         print("[STM/INFO] Starting sender thread")
-        while not self.disconnected_flag:
+        while not disconnect_flag and not self.kill_flag:
             try:
                 if not STM_OUT.empty():
                     send_data = STM_OUT.get().encode()
