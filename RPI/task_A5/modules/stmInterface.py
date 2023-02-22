@@ -101,6 +101,16 @@ class STMInterface:
             print(f"[STM/Error] Failed to disconnect")
             traceback.print_exc()
 
+    def decode_instr(self, instr):
+        sub_instr_arr = instr.split(',')
+        
+        for sub_instr in sub_instr_arr:
+            while not self.complete_flag: pass      # Might use a lot of resource potential fix -> put time.sleep(0.5)
+            self.stm.write(sub_instr.rstrip())
+            self.complete_flag = False
+        
+        STM_IN.put("PIC")
+
     def listener(self) -> "workerThread":
         disconnect_flag = False
         print("[STM/INFO] Starting listener thread")
@@ -108,12 +118,16 @@ class STMInterface:
             try:
                 rcv_data = int(self.stm.read().lstrip().rstrip())     # might not need lstrip/rstrip
                 print("[STM/INFO] STM received command")
+                
                 if (rcv_data == 20001):
                     print("[STM/INFO] STM received command")
                     self.receive_flag = True
-                elif (rcv_data == 20002): self.complete_flag = True
-                
-                STM_IN.put(rcv_data)
+                    
+                # sub instr complete
+                elif (rcv_data == 20002): 
+                    self.complete_flag = True
+                else:
+                    STM_IN.put(rcv_data)
             except KeyboardInterrupt:
                 disconnect_flag = True
             except:
@@ -134,12 +148,11 @@ class STMInterface:
                 traceback.print_exc()
         print("[STM/INFO] Exiting sender thread")
     
-    def send(self, command):
-        print(f"[STM/INFO] Sending to STM: {command}")
-        command = command.encode()          # Need encoding? ascii/utf-8?
-        self.stm.write(command)
-        self.stm.flushInput()
-        #self.receive()
+    def send(self, data):
+        self.stm.write(data)
+        self.stm.flush()        # self.stm.flushInput()
+        
+        
 
 if __name__ == "__main__":
     import traceback
