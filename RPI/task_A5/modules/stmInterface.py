@@ -101,7 +101,7 @@ class STMInterface:
             print(f"[STM/Error] Failed to disconnect")
             traceback.print_exc()
 
-    def decode_instr(self, instr):
+    def decode_and_send__instr(self, instr):
         sub_instr_arr = instr.split(',')
         
         for sub_instr in sub_instr_arr:
@@ -142,8 +142,9 @@ class STMInterface:
                 if not STM_OUT.empty():
                     send_data = STM_OUT.get().encode()
                     print(f"[STM/INFO] Sending to STM: {send_data}")
-                    self.stm.write(send_data)
-                    self.stm.flush()        # self.stm.flushInput()
+                    self.decode_and_send__instr(send_data)
+                    # self.stm.write(send_data)
+                    # self.stm.flush()        # self.stm.flushInput()
             except:
                 traceback.print_exc()
         print("[STM/INFO] Exiting sender thread")

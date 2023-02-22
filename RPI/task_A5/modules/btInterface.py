@@ -10,7 +10,8 @@ Class for setting up bluetooth connection sockets
 import os
 import bluetooth as bt
 import threading
-from .helper import ANDROID_IN, ANDROID_OUT
+# from .helper import ANDROID_IN, ANDROID_OUT
+from helper import ANDROID_IN, ANDROID_OUT
 
 CLIENT_EXIT_FLAG = True
 CLIENT_SOCKET_TIMEOUT = 0.1

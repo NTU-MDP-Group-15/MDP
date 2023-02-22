@@ -1,6 +1,6 @@
 '''
 Filename: imgrecInterface.py
-Version: 0.1
+Version: v0.2
 
 Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
@@ -13,9 +13,10 @@ Class for setting up connection sockets for algo
 '''
 import os
 import cv2
+import time
+import socket
 import imagezmq
 import traceback
-import socket
 import threading
 from .helper import IMGREC_IN, IMGREC_OUT, IMGREC_PORT
 
@@ -23,54 +24,109 @@ CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(os.path.split(CUR_DIR)[0], "photos")
 WIDTH = 640
 HEIGHT = 480
-IP_ADDRESS = "192.168.15.1"
+RPI_IP = "192.168.15.1"
+ZMQ_IP = "192.168.15.69"
+ZMQ_PORT = 5555
+
+NO_OF_PIC = 5
+IMG_FORMAT = "jpg"
 
 #class ImageRecInterface:
 class ImageRecInterface(threading.Thread):
-    def __init__(self, img_format="jpg"):
+    def __init__(self, rpi_ip=RPI_IP, imgrec_port=IMGREC_PORT, 
+                 zmq_ip=ZMQ_IP, zmq_port=ZMQ_PORT,  
+                 no_of_pic=NO_OF_PIC, img_format=IMG_FORMAT, 
+                 capture_index=0
+                 ):
         super().__init__()
+        self.rpi_ip = rpi_ip
+        self.imgrec_port = imgrec_port
+        self.zmq_ip=zmq_ip
+        self.zmq_port=zmq_port
+        self.zmq_address = f"tcp://{zmq_ip}:{zmq_port}"
+        self.no_of_pic=no_of_pic
         self.img_format = img_format
+        self.capture_index = capture_index
+        
         self.kill_flag = False
-        #self.idx = self.get_file_count()
+        self.stop_vid_flag = False
+        # self.idx = self.get_file_count()
         
-        self.zmq_sender = imagezmq.ImageSender(connect_to=f"tcp://192.168.15.69:{IMGREC_PORT}")
-        self.picam = cv2.VideoCapture(0)
-        self.picam.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
-        self.picam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
-       
+        self.rpi_name = socket.gethostname()
+        self.picam = self.get_video_capture()
+        self.img_sender = self.get_image_sender()
+               
     def run(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as self.s_sock:
-            self.s_sock.bind((IP_ADDRESS, IMGREC_PORT))
-            self.s_sock.listen(1)
-            
-            while True:
-                try:
-                    self.c_sock, self.c_addr = self.s_sock.accept()
-                except socket.timeout:
-                    pass
-                else:
-                    print(f"[IMGREC/INFO] Connection from {self.c_addr}")
-                    break
-
-        #self.img_sender = imagezmq.ImageSender(connect_to=f"tcp://{IP_ADDRESS}:{IMGREC_PORT}")
+        self.connect()
         threading.Thread(target=self.listener).start()
-        #self.video()
-        
-        
+        self.send_video()
+       
+    def get_video_capture(self) -> cv2.VideoCapture:
+        print("[IMGREC/INFO] Waiting 2 seconds to warm up camera")
+        cap = cv2.VideoCapture(self.capture_index)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
+        time.sleep(2)
+        print("[IMGREC/INFO] Completed")
+        assert cap.isOpened()
+        return cap
+    
+    def get_image_sender(self) -> imagezmq.ImageSender:
+        # imagezmq.ImageSender(connect_to=self.zmq_address, REQ_REP=False)
+        return imagezmq.ImageSender(connect_to=self.zmq_address)
+    
     def get_file_count(self) -> int:
         _, _, files = next(os.walk(IMG_DIR))
         return len(files)
+    
+    def connect(self):
+        self.s_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s_sock.bind((self.rpi_ip, self.imgrec_port))
+        self.s_sock.listen(1)
+        
+        while True:
+            try:
+                self.c_sock, self.c_addr = self.s_sock.accept()
+            except socket.timeout:
+                pass
+            except KeyboardInterrupt:
+                print("[IMGREC/INFO] Recevied KeyboardInterrupt")
+                self.kill_flag = True
+            else:
+                print(f"[IMGREC/INFO] Connection from {self.c_addr}")
+                break
+        self.s_sock.close()
+        
+        # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as self.s_sock:
+        #     self.s_sock.bind((IP_ADDRESS, IMGREC_PORT))
+        #     self.s_sock.listen(1)
+            
+        #     self.c_sock, self.c_addr = self.s_sock.accept()
+        #     print(f"[IMGREC/INFO] Connection from {self.c_addr}")        
 
-    def take_picture(self, no_of_pic=3, name="img{idx}.{img_format}"):
+
+    def send_video(self):
+        while not self.kill_flag:
+            while not self.stop_vid_flag:
+                ret, frame = self.picam.read()
+                if ret == True:
+                    # Display the resulting frame
+                    self.img_sender.send_image(self.rpi_name, frame)
+                    print("Sending")
+                
+                # Break the loop
+                else: 
+                    print("[IMGREC/INFO] ret = False")
+                    break
+
+    def take_picture(self, name="img{idx}.{img_format}"):
         # img_name = name.format(idx=self.idx, img_format=self.img_format)
-        if self.picam.isOpened():
-            for _ in range(no_of_pic):
-                _, frame = self.picam.read()
-                if frame is not None:
-                    # cv2.imwrite(os.path.join(IMG_DIR, img_name), frame)
-                    self.zmq_sender.send_image("RPI", frame)
-
-    def video(self):
+        for _ in range(self.no_of_pic):
+            ret, frame = self.picam.read()
+            if ret == True:
+                self.img_sender.send_image(self.rpi_name, frame)    
+    
+    def show_video(self):
         disconnect_flag = False
         while self.picam.isOpened() and not disconnect_flag:
             ret, frame = self.picam.read()
@@ -92,14 +148,17 @@ class ImageRecInterface(threading.Thread):
         self.picam.release()
         # Closes all the frames
         cv2.destroyAllWindows()
-
+        
     def listener(self) -> "workerThread":
+        self.stop_vid_flag = False
         disconnect_flag = False
+        
         print("[IMGREC/INFO] Starting listener thread")
         while not disconnect_flag and not self.kill_flag:
             try:
                 rcv_data = self.c_sock.recv(1024).decode()
                 if rcv_data:
+                    if rcv_data == "disconnect": break
                     print(f"[IMGREC/INFO] IMGREC received {rcv_data}")
                     IMGREC_IN.put(rcv_data)
             except KeyboardInterrupt:
@@ -109,6 +168,7 @@ class ImageRecInterface(threading.Thread):
                 traceback.print_exc()
                 pass
         print("[IMGREC/INFO] Exiting listener thread")
+        self.stop_vid_flag = True
 
     def sender(self) -> "workerThread":
         disconnect_flag = False
@@ -123,7 +183,22 @@ class ImageRecInterface(threading.Thread):
             except:
                 traceback.print_exc()
         print("[IMGREC/INFO] Exiting sender thread")
-        
+    
+    
+    def old_sender(self) -> "workerThread":
+        disconnect_flag = False
+        print("[IMGREC/INFO] Starting sender thread")
+        while not disconnect_flag and not self.kill_flag:
+            try:
+                if not IMGREC_OUT.empty():
+                    send_data = IMGREC_OUT.get().encode()
+                    print(f"[IMGREC/INFO] Sending to laptop: {send_data}")
+                    # self.stm.write(send_data)
+                    # self.stm.flush()        # self.stm.flushInput()
+            except:
+                traceback.print_exc()
+        print("[IMGREC/INFO] Exiting sender thread")
+    
                 
 if __name__ == "__main__":
     imInt = ImageRecInterface()
