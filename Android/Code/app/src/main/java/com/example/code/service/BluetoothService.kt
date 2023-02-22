@@ -437,16 +437,16 @@ class BluetoothService(
                     val bytes = mmInStream!!.read(buffer)
                     val result: HashMap<String, String> = MessageService.parseMessage(buffer, bytes)
                     when (result["TAG"]) {
-                        "[C4]" -> {
+                        "C4" -> {
                             arenaViewModel.setRobotStatusMessage(result["msg"]!!)
                         }
-                        "[C9]" -> {
+                        "C9" -> {
                             arenaViewModel.setObstacleValue(
                                 id = result["id"]!!.toInt(),
                                 value = result["value"]!!.toInt()
                             )
                         }
-                        "[C10]" -> {
+                        "C10" -> {
                             arenaViewModel.setRobotPosFacing(
                                 x = result["x"]!!.toInt(),
                                 y = result["y"]!!.toInt(),

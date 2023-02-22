@@ -37,6 +37,7 @@ class MessageService {
         [C4] TAR 1 (heading to target 1)
          */
         private fun parseRobotStatus(list: List<String>, result: HashMap<String, String>): String {
+            result["TAG"] = "C4"
             val action = list[1]
             val value = list[2]
             var parsedMsg = ""
