@@ -49,15 +49,25 @@ class MessageService {
                         "Bd" -> parsedMsg += "Backward"
                         "Lt" -> parsedMsg += "Left"
                         "Rt" -> parsedMsg += "Right"
+                        else -> result["TAG"] = "Error"
                     }
                 }
                 "IMG" -> {
                     when (value) {
                         "TP" -> parsedMsg = "Taking a Photo"
                         "MI" -> parsedMsg = "Running Model on Image"
+                        else -> result["TAG"] = "Error"
                     }
                 }
-                "TAR" -> parsedMsg = "Heading to Target $value"
+                "TAR" -> {
+                    if (value.toIntOrNull() != null) {
+                        parsedMsg = "Heading to Target $value"
+                    }
+                    else {
+                        result["TAG"] = "Error"
+                    }
+                }
+                else -> result["TAG"] = "Error"
             }
             return parsedMsg
         }
