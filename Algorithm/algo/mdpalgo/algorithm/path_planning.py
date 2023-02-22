@@ -102,10 +102,17 @@ class PathPlan(object):
             self.draw_path_of_move_on_grid(path)
 
         self.collection_of_robot_pos.append(self.get_robot_pos())
-        self.grid.set_obstacle_as_visited(self.obstacle_cell)
+        try:
+            self.grid.set_obstacle_as_visited(self.obstacle_cell)
+        except Exception as e:
+             logging.exception(e)
+             pass
         self.robot.redraw_car_refresh_screen()
-
-        self.save_search_info()
+        try:
+            self.save_search_info()
+        except Exception as e:
+             logging.exception(e)
+             pass
 
     def draw_path_of_move_on_grid(self, cell_coords):
         for x, y in cell_coords:
