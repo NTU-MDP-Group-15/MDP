@@ -76,13 +76,18 @@ class MessageService {
             bts.write(toByteArray(msg))
         }
 
+        fun sendStartSignal(bts: BluetoothService) {
+            val msg = "Ready to start"
+            bts.write(toByteArray(msg))
+        }
+
         // C9: Display Target ID Found
         // [Tag], Obstacle_ID, Target
         private fun parseTargetIDFound(
             list: List<String>,
             result: HashMap<String, String>
         ): String {
-            val validIDs = (1..40).toList()
+            val validIDs = (11..40).toList()
             result["id"] = list[1]
             result["value"] = list[2]
             if (validIDs.contains(result["value"]!!.toInt())) {

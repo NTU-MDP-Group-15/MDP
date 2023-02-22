@@ -1,5 +1,6 @@
 package com.example.code.ui.screens.arena
 
+import android.os.Message
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.example.code.service.BluetoothService
 import com.example.code.service.MessageService
 import com.example.code.ui.states.ArenaUiState
+import com.example.code.ui.states.BluetoothUiState
 import com.example.code.ui.states.Obstacle
 import com.example.code.ui.viewmodels.ArenaViewModel
 
@@ -68,7 +70,18 @@ fun ArenaScreen(
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             ClearObstacles(viewModel = viewModel)
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
-            RobotStatus(arenaUiState = arenaUiState)
+            Text(text = "Robot Status", fontSize = 20.sp)
+            TextField(
+                modifier = Modifier
+                    .fillMaxHeight(0.7f)
+                    .fillMaxWidth(1f),
+                value = arenaUiState.robotStatusMessage,
+                onValueChange = {},
+                readOnly = true
+            )
+            Row(){
+                StartRobot(bluetoothService = bluetoothService)
+            }
         }
     }
 }
@@ -78,8 +91,7 @@ fun StatusDisplay(arenaUiState: ArenaUiState) {
     Row(modifier = Modifier.fillMaxWidth(1f)) {
         Text(
             text = "${arenaUiState.taskMode} | " +
-                    "${arenaUiState.gridWidth}, ${arenaUiState.gridHeight} | " +
-                    "",
+                    "${arenaUiState.gridWidth}, ${arenaUiState.gridHeight} | ",
             fontWeight = FontWeight.ExtraBold
         )
     }
@@ -588,17 +600,13 @@ fun SetRobotOrientation(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
 }
 
 @Composable
-fun RobotStatus(
-    arenaUiState: ArenaUiState
+fun StartRobot(
+    bluetoothService: BluetoothService
 ) {
-    Text(text = "Robot Status", fontSize = 20.sp)
-    TextField(
-        modifier = Modifier
-            .fillMaxHeight(0.4f)
-            .fillMaxWidth(1f),
-        value = arenaUiState.robotStatusMessage,
-        onValueChange = {},
-        readOnly = true
-    )
+    Button(onClick = {
+        MessageService.sendStartSignal(bts=bluetoothService)
+    }) {
+        Text(text="Start Task")
+    }
 }
 
