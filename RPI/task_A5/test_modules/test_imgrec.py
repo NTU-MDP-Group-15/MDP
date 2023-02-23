@@ -1,6 +1,6 @@
 '''
 Filename: imgrecInterface.py
-Version: v0.7
+Version: v0.2
 
 Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
@@ -10,8 +10,6 @@ Class for setting up connection sockets for algo
          disconnect_flag is now local variable
 220223 - Updated imagezmq server logic
 230223 - Updated taking photo logic
-         Removed ImageRecInterface as thread
-         send_video now sends exactly 5 frames
 '''
 import os
 import cv2
@@ -20,10 +18,10 @@ import socket
 import imagezmq
 import traceback
 import threading
-from .helper import IMGREC_IN, IMGREC_OUT, IMGREC_PORT, IMG_DIR
+from helper import IMGREC_IN, IMGREC_OUT, IMGREC_PORT
 
-HEIGHT = 480
-WIDTH = 640
+HEIGHT = 400
+WIDTH = 600
 RPI_IP = "192.168.15.1"
 ZMQ_IP = "192.168.15.69"
 ZMQ_PORT = 5555
@@ -31,15 +29,13 @@ ZMQ_PORT = 5555
 NO_OF_PIC = 5
 IMG_FORMAT = "jpg"
 
-# class ImageRecInterface(threading.Thread):
+#class ImageRecInterface:
 class ImageRecInterface:
     def __init__(self, rpi_ip=RPI_IP, imgrec_port=IMGREC_PORT, 
                  zmq_ip=ZMQ_IP, zmq_port=ZMQ_PORT,  
                  no_of_pic=NO_OF_PIC, img_format=IMG_FORMAT, 
                  capture_index=0
                  ):
-        # super().__init__()        # thread
-        self.lock = threading.Lock()
         self.rpi_ip = rpi_ip
         self.imgrec_port = imgrec_port
         self.zmq_ip=zmq_ip
@@ -50,6 +46,7 @@ class ImageRecInterface:
         self.capture_index = capture_index
         
         self.kill_flag = False
+        self.stop_vid_flag = False
         self.send_image_flag = False
         # self.idx = self.get_file_count()
 
@@ -68,15 +65,15 @@ class ImageRecInterface:
         self.connect()
         threading.Thread(target=self.listener).start()
         threading.Thread(target=self.send_video).start()
-
+        
     def get_video_capture(self) -> cv2.VideoCapture:
         cap = cv2.VideoCapture(self.capture_index)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
         print("[IMGREC/INFO] Waiting 2 seconds to warm up camera")
         time.sleep(2)
+        print("[IMGREC/INFO] Completed")
         assert cap.isOpened()
-        print("[IMGREC/INFO] Camera completed")
         return cap
     
     def get_image_sender(self) -> imagezmq.ImageSender:
@@ -118,45 +115,20 @@ class ImageRecInterface:
         print("[IMGREC_VID/INFO] Starting video thread")
         while not self.kill_flag:
             ret, frame = self.picam.read()
-            if self.send_image_flag:
-                for _ in range(self.no_of_pic):
-                    ret, frame = self.picam.read()
-                    if ret == True:
-                        print("[IMGREC_VID/INFO] Sending frame")
-                        self.lock.acquire()
-                        self.img_sender.send_image(self.rpi_name, frame)
-                        self.lock.release()
-                    # Break the loop
-                    else: 
-                        print("[IMGREC_VID/INFO] ret = False")
-                        break
-                self.send_image_flag = False
+            while self.send_image_flag:
+                if ret == True:
+                    print("[IMGREC_VID/INFO] Sending image")
+                    self.img_sender.send_image(self.rpi_name, frame)
+            
+                # Break the loop
+                else: 
+                    print("[IMGREC_VID/INFO] ret = False")
+                    break
+            
         self.picam.close()
         
-    def show_video(self):
-        disconnect_flag = False
-        while self.picam.isOpened() and not disconnect_flag:
-            ret, frame = self.picam.read()
-            if ret == True:
-                # Display the resulting frame
-                cv2.imshow('Frame',frame)        
-                #cv2.imwrite('c1.png',frame)
-                self.img_sender.send_image("img", frame)
-                
-                # Press Q on keyboard to  exit
-                if cv2.waitKey(25) & 0xFF == ord('q'):
-                  break
-            # Break the loop
-            else: 
-                print("[IMGREC/INFO] ret = False")
-                break
-            
-        # When everything done, release the video capture object
-        self.picam.release()
-        # Closes all the frames
-        cv2.destroyAllWindows()
-        
     def listener(self) -> "workerThread":
+        self.stop_vid_flag = False
         disconnect_flag = False
         
         print("[IMGREC_LISTENER/INFO] Starting listener thread")

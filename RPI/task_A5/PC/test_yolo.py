@@ -28,25 +28,54 @@ def main():
     # Model
     model = torch.hub.load('../yolov5', 'custom', path='./bestv5.pt',
                                     source='local')
+    model.conf = 0.60  # confidence threshold (0-1)
+    model.iou = 0.45  # NMS IoU threshold (0-1) 
     # model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, etc.
     # model = torch.hub.load('ultralytics/yolov5', 'custom', 'path/to/best.pt')  # custom trained model
 
     # Images
     # im = 'https://ultralytics.com/images/zidane.jpg'  # or file, Path, URL, PIL, OpenCV, numpy, list
-    im = "../images/8.jpg"
+    im = "../images/Bullseye.jpg"
+    # im = "../images/8.jpg"
 
     # Inference
     results = model(im)
-    # results.show()      # shows image with box
+    results.show()      # shows image with box
     # results.print()  # or .show(), .save(), .crop(), .pandas(), etc.
-
-    results.xyxy[0]  # im predictions (tensor)
-    pd = results.pandas().xyxy[0]["class"][0]  # im predictions (pandas)
+    
+    # results.xyxy[0]  # im predictions (tensor)
+    # pd = results.pandas().xyxy[0]["name"][0]  # im predictions (pandas)
     #      xmin    ymin    xmax   ymax  confidence  class    name
     # 0  749.50   43.50  1148.0  704.5    0.874023      0  person
     # 2  114.75  195.75  1095.0  708.0    0.624512      0  person
     # 3  986.00  304.00  1028.0  420.0    0.286865     27     tie
-    print(pd)
+    # print(pd)
+    
+    # info = results.pandas().xyxy[0]
+    # info2 = results.pandas().xyxy[0].to_dict(orient = "records")
+    # if len(info2) != 0:
+        # for result in info2:
+            # information = result['label']   
+    pd = results.pandas().xyxy[0]
+    print(get_name_with_higest_confidence(pd))
+    
+    # pred = results.pandas().xyxy[0]
+    # for index, row in pred.iterrows():        
+    #     print(row['name'], row['confidence'])
+    #     if str(row['class']) == "0":
+    #         print("PERSON FOUND")
+    #     if float(row['confidence']) > 0.7:
+    #         print("HIT")
+    
+    
+def get_name_with_higest_confidence(pd):
+    if len(pd) == 0: return 99
+    highest_confidence = pd["confidence"].max()
+    for index, row in pd.iterrows():    
+        # print(row['name'])
+        if row['confidence'] == highest_confidence:
+            return row['name']
+    
     
     
 main()
