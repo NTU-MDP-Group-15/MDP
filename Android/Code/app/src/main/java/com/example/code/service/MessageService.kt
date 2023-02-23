@@ -115,7 +115,7 @@ class MessageService {
             list: List<String>,
             result: HashMap<String, String>
         ): String {
-            val validCoordinates = (1..19).toList()
+            val validCoordinates = (0..19).toList()
             val validFacings = listOf("N", "S", "E", "W")
             result["x"] = list[1]
             result["y"] = list[2]
