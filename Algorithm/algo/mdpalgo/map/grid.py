@@ -174,11 +174,9 @@ class Grid(object):
         surrounding a given cell, within a 2 cell radius (1 for diagonal)."""
         x, y = cell.get_xcoord(), cell.get_ycoord()
         boundary_cells = [
-                            [x - 1, y + 2], [x, y + 2], [x + 1, y + 2],
-            [x - 2, y + 1], [x - 1, y + 1], [x, y + 1], [x + 1, y + 1], [x + 2, y + 1],
-            [x - 2, y    ], [x - 1, y    ],             [x + 1, y    ], [x + 2, y    ],
-            [x - 2, y - 1], [x - 1, y - 1], [x, y - 1], [x + 1, y - 1], [x + 2, y - 1],
-                            [x - 1, y - 2], [x, y - 2], [x + 1, y - 2],
+            [x - 1, y + 1], [x, y + 1], [x + 1, y + 1],
+            [x - 1, y    ],             [x + 1, y    ],
+            [x - 1, y - 1], [x, y - 1], [x + 1, y - 1]
         ]
         return boundary_cells
 
