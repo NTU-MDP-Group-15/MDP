@@ -30,8 +30,6 @@ btInterface.py
          Updated logic for sending of pictures
 
 
-
-
 Order of connection STM -> IMGREC -> ALGO -> BT
 """
 import modules 
