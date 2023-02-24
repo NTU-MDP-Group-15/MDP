@@ -1,14 +1,17 @@
 '''
 Filename: btInterface.py
-Version: 0.2
+Version: v0.3a
 
 Class for setting up bluetooth connection sockets
 ! Updates (DDMMYY)
-
+200223 - Added Queue
+         Logic for task A5 (bulleyes target)
 '''
 import os
 import bluetooth as bt
 import threading
+# from .helper import ANDROID_IN, ANDROID_OUT
+from helper import ANDROID_IN, ANDROID_OUT
 
 CLIENT_EXIT_FLAG = True
 CLIENT_SOCKET_TIMEOUT = 0.1
@@ -28,7 +31,7 @@ class BTServerInterface(threading.Thread):
     def run(self):
         print(f"[BT/INFO] Starting thread {self.name}")
         connected = self.connect()
-        if connected: self.listen()
+        if connected: self.listener()
         print("[BT/INFO] Disconnected")
         self.c_sock.close()
         self.s_sock.close()
@@ -53,18 +56,18 @@ class BTServerInterface(threading.Thread):
             return True
         except: return False
         
-    def listen(self):
+    def listener(self):
         while True:
             try:
-                raw_data = self.c_sock.recv(1024)
-                if raw_data:
-                    data = raw_data.decode().rstrip()
+                data = self.c_sock.recv(1024)
+                if data:
+                    data = data.decode().rstrip()       # remove any CR or CRLF
                     print(f"[BT/INFO] Received {data}" )
                     #self.c_sock.send("Pi: received\n")
                     #print("[BT/INFO] sending receive")
                     if data == "exit" or data == "bye":
                         break
-                    
+                    ANDROID_IN.put(data)
                     '''
                     if data == "photo":
                         print("[INFO] Taking photo in progress")

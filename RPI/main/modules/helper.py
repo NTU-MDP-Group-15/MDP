@@ -1,10 +1,11 @@
 '''
 Filename: helper.py
-Version: 0.1
+Version: v0.2
 
 Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
 070223 - Basic helper functions and global variables for memory sharing between threads
+230223 - Added protocol variables
 '''
 import os
 import queue
@@ -13,6 +14,9 @@ import queue
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(os.path.split(CUR_DIR)[0], "photos")
 
+
+# STM_OUT will only contain instructions in strings "01050,11030..."
+# STM_IN will contain "PIC"
 STM_IN, STM_OUT = queue.Queue(), queue.Queue() 
 ANDROID_IN, ANDROID_OUT = queue.Queue(), queue.Queue() 
 ALGO_IN, ALGO_OUT = queue.Queue(), queue.Queue() 
@@ -24,8 +28,10 @@ STM_PORT = 12346
 BT_PORT = 12347
 IMGREC_PORT = 12348
 
+TAKE_PIC = "PIC"
+
 IMAGE_DICT = {
-    "NA": "NA",
+    "0": "Bullseye",
     "11": "One",
     "12": "Two",
     "13": "Three",
@@ -56,7 +62,7 @@ IMAGE_DICT = {
     "38": "Right Arrow",
     "39": "Left Arrow",
     "40": "Stop",
-    "41": "Bullseye"
+    "99": "NA"
 }
 
 #def debug(where, *msg):
