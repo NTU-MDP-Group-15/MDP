@@ -119,7 +119,7 @@ class STMInterface:
         print(f"[STM/INFO] {sub_instr_arr}")
         
         for sub_instr in sub_instr_arr:
-            sub_instr = sub_instr.rstrip.encode()
+            sub_instr = sub_instr.rstrip().encode()
             print(f"[STM/INFO] Sending {sub_instr}")
             self.stm.write(sub_instr)
             self.stm.flush()            # self.stm.flushInput()

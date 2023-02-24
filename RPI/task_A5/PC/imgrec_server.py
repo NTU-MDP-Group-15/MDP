@@ -52,11 +52,11 @@ class ImgRecServer:
         '''
         Load trained YOLOv5 model
         '''
-        model = yolov5.load(model_path)                      # online load
-        # self.model = torch.hub.load(yolo_path, 'custom', path=model_path,
-        #                             source='local')         # offline load
+        #model = yolov5.load(model_path)                      # online load
+        model = torch.hub.load(yolo_path, 'custom', path=model_path,
+                               source='local')         # offline load
         model.conf = MIN_CONFIDENCE_THRESHOLD
-        # model.iou = NON_RED_CONFIDENCE_THRESHOLD
+        model.iou = NMS_IOU
         print("[IMGREC_S/INFO] Loaded model")
         return model
 
@@ -83,7 +83,7 @@ class ImgRecServer:
                 # print("[IMGREC_S/INFO] Received frame")
                 cv2.imshow(rpi_name, frame)
                 cv2.waitKey(1)
-                
+                 
                 results = self.model(frame)
                 # results.show()            # show image with box
                 pd = results.pandas().xyxy[0]
