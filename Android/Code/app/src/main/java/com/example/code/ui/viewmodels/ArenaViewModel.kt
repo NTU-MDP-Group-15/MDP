@@ -105,6 +105,8 @@ class ArenaViewModel : ViewModel() {
     // Set Obstacle Value
     fun setObstacleValue(id: Int, value: Int) {
         val tmp = _uiState.value.obstacles.filter { it.id == id }
+        if (tmp.isEmpty())
+            return
         val obstacle = tmp.first()
         val restObstacles = _uiState.value.obstacles.filter { it.id != id }
         _uiState.update { currentState ->

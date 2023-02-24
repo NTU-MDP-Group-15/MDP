@@ -60,7 +60,7 @@ fun ArenaScreen(
             StatusDisplay(arenaUiState = arenaUiState)
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             TaskModeInput(viewModel = viewModel)
-            //GridSizeInput(viewModel = viewModel, arenaUiState = arenaUiState)
+            GridSizeInput(viewModel = viewModel, arenaUiState = arenaUiState)
             //SetRobotOrientation(viewModel = viewModel, arenaUiState = arenaUiState)
             ObstacleInput(
                 viewModel = viewModel,
