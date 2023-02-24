@@ -40,7 +40,7 @@ class MessageService {
             result["TAG"] = "C4"
             val action = list[1]
             val value = list[2]
-            var parsedMsg = ""
+            var parsedMsg = value
             when (action) {
                 "MOV" -> {
                     parsedMsg = "Moving "
@@ -100,11 +100,15 @@ class MessageService {
             val validIDs = (11..40).toList()
             result["id"] = list[1]
             result["value"] = list[2]
-            if (validIDs.contains(result["value"]!!.toInt())) {
-                result["TAG"] = "C9"
-            }
-            else {
+            if ((!isInteger(result["id"])) || (!isInteger(result["value"])))
                 result["TAG"] = "Error"
+            else {
+                if (validIDs.contains(result["value"]!!.toInt())) {
+                    result["TAG"] = "C9"
+                }
+                else {
+                    result["TAG"] = "Error"
+                }
             }
             return "Invalid Image Target ID"
         }
@@ -119,17 +123,25 @@ class MessageService {
             val validFacings = listOf("N", "S", "E", "W")
             result["x"] = list[1]
             result["y"] = list[2]
-            result["facing"] = list[3]
-            if (
-                (validCoordinates.contains(result["x"]!!.toInt())) &&
-                (validCoordinates.contains(result["y"]!!.toInt())) &&
-                (validFacings.contains(result["facing"]!!))
-            ) {
-                result["TAG"] = "C10"
-            } else {
+            if ((!isInteger(result["x"])) || (!isInteger(result["y"])))
                 result["TAG"] = "Error"
+            else {
+                result["facing"] = list[3]
+                if (
+                    (validCoordinates.contains(result["x"]!!.toInt())) &&
+                    (validCoordinates.contains(result["y"]!!.toInt())) &&
+                    (validFacings.contains(result["facing"]!!))
+                ) {
+                    result["TAG"] = "C10"
+                } else {
+                    result["TAG"] = "Error"
+                }
             }
             return "Invalid Robot Position or Facing"
+        }
+
+        private fun isInteger(s: String?): Boolean {
+            return s!!.toIntOrNull() != null
         }
     }
 }
