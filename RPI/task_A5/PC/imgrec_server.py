@@ -19,6 +19,8 @@ from PIL import Image
 
 MIN_CONFIDENCE_THRESHOLD = 0.75         # Change this to ensure no double results
 NON_RED_CONFIDENCE_THRESHOLD = 0.55
+NMS_IOU = 0.55
+
 
 IMGREC_PORT = 12348
 RPI_IP = "192.168.15.1"
@@ -54,7 +56,7 @@ class ImgRecServer:
         # self.model = torch.hub.load(yolo_path, 'custom', path=model_path,
         #                             source='local')         # offline load
         model.conf = MIN_CONFIDENCE_THRESHOLD
-        model.iou = NON_RED_CONFIDENCE_THRESHOLD
+        # model.iou = NON_RED_CONFIDENCE_THRESHOLD
         print("[IMGREC_S/INFO] Loaded model")
         return model
 
