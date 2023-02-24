@@ -137,7 +137,7 @@ class STMInterface:
         while not disconnect_flag and not self.kill_flag:
             try:
                 self.lock.acquire()
-                rcv_data = int(self.stm.readline())     # might not need lstrip/rstrip
+                rcv_data = self.stm.readline()     # might not need lstrip/rstrip
                 self.lock.release()
                 
                 if rcv_data != b'':
