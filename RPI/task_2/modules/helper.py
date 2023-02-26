@@ -29,6 +29,7 @@ BT_PORT = 12347
 IMGREC_PORT = 12348
 
 TAKE_PIC = "PIC"
+NO_OF_PIC = 5
 
 IMAGE_DICT = {
     "0": "Bullseye",
