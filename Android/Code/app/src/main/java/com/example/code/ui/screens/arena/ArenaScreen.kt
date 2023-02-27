@@ -1,10 +1,7 @@
 package com.example.code.ui.screens.arena
 
 import android.os.Message
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -15,10 +12,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.code.R
 import com.example.code.service.BluetoothService
 import com.example.code.service.MessageService
 import com.example.code.ui.states.ArenaUiState
@@ -42,7 +41,7 @@ fun ArenaScreen(
         // Arena Grid
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.55f)
+                .fillMaxWidth(0.6f)
                 .fillMaxHeight(1f)
         ) {
             ArenaGrid(
@@ -59,25 +58,26 @@ fun ArenaScreen(
         ) {
             StatusDisplay(arenaUiState = arenaUiState)
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
-            TaskModeInput(viewModel = viewModel)
-            ObstacleInput(
-                viewModel = viewModel,
-                arenaUiState = arenaUiState,
-                bluetoothService = bluetoothService
-            )
-            Spacer(modifier = Modifier.padding(bottom = spacerDP))
-            ClearObstacles(viewModel = viewModel)
-            Spacer(modifier = Modifier.padding(bottom = spacerDP))
             Text(text = "Robot Status", fontSize = 20.sp)
             TextField(
-//                modifier = Modifier
-//                    .fillMaxHeight(0.5f)
-//                    .fillMaxWidth(1f),
+                modifier = Modifier.fillMaxWidth(0.95f),
                 value = arenaUiState.robotStatusMessage,
                 onValueChange = {},
                 readOnly = true
             )
+            Spacer(modifier = Modifier.padding(bottom = spacerDP))
+            TaskModeInput(viewModel = viewModel)
+            Spacer(modifier = Modifier.padding(bottom = spacerDP))
+            ObstacleInput(
+                viewModel = viewModel,
+                arenaUiState = arenaUiState
+            )
+            Spacer(modifier = Modifier.padding(bottom = 15.dp))
+            ClearObstacles(viewModel = viewModel)
+            Spacer(modifier = Modifier.padding(bottom = spacerDP))
             Row(){
+                SendObstacles(bluetoothService = bluetoothService, arenaUiState = arenaUiState)
+                Spacer(modifier = Modifier.padding(spacerDP))
                 StartRobot(bluetoothService = bluetoothService)
             }
         }
@@ -159,7 +159,7 @@ fun GridBox(
     yCoordinate: Int,
 ) {
     DropItem<Obstacle>(
-        modifier = Modifier.size(25.dp)
+        modifier = Modifier.size(26.dp)
     ) { isInBound, obstacle ->
         val self =
             arenaUiState.obstacles.filter { (it.xPos == xCoordinate) && (it.yPos == yCoordinate) }
@@ -174,10 +174,10 @@ fun GridBox(
                 LaunchedEffect(key1 = obstacle) {
                     if (obstacle.xPos != null && obstacle.xPos != xCoordinate) {
                         viewModel.removeObstacle(obstacleID = obstacle.id)
-                        MessageService.sendSubObstacle(
-                            bts = bluetoothService,
-                            id = obstacle.id,
-                        )
+//                        MessageService.sendSubObstacle(
+//                            bts = bluetoothService,
+//                            id = obstacle.id,
+//                        )
                         viewModel.repositionObstacle(
                             Obstacle(
                                 id = obstacle.id,
@@ -186,7 +186,7 @@ fun GridBox(
                                 facing = obstacle.facing
                             )
                         )
-                        MessageService.sendAddObstacle(
+                        /*MessageService.sendAddObstacle(
                             bts = bluetoothService,
                             id = obstacle.id,
                             x = xCoordinate,
@@ -196,7 +196,7 @@ fun GridBox(
                             bts = bluetoothService,
                             id = obstacle.id,
                             facing = obstacle.facing!!
-                        )
+                        )*/
                     } else if (obstacle.xPos != null) {
                         // do nothing
                     } else {
@@ -209,17 +209,17 @@ fun GridBox(
                                 facing = "N"
                             )
                         )
-                        MessageService.sendAddObstacle(
-                            bts = bluetoothService,
-                            id = id,
-                            x = xCoordinate,
-                            y = yCoordinate
-                        )
-                        MessageService.sendObstacleFacing(
-                            bts = bluetoothService,
-                            id = id,
-                            facing = "N"
-                        )
+//                        MessageService.sendAddObstacle(
+//                            bts = bluetoothService,
+//                            id = id,
+//                            x = xCoordinate,
+//                            y = yCoordinate
+//                        )
+//                        MessageService.sendObstacleFacing(
+//                            bts = bluetoothService,
+//                            id = id,
+//                            facing = "N"
+//                        )
                     }
                 }
             }
@@ -414,7 +414,6 @@ fun TaskModeInput(viewModel: ArenaViewModel) {
 fun ObstacleInput(
     viewModel: ArenaViewModel,
     arenaUiState: ArenaUiState,
-    bluetoothService: BluetoothService
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically
@@ -443,10 +442,10 @@ fun ObstacleInput(
             if (obstacle != null) {
                 LaunchedEffect(key1 = obstacle) {
                     viewModel.removeObstacle(obstacleID = obstacle.id)
-                    MessageService.sendSubObstacle(
-                        bts = bluetoothService,
-                        id = obstacle.id,
-                    )
+//                    MessageService.sendSubObstacle(
+//                        bts = bluetoothService,
+//                        id = obstacle.id,
+//                    )
                 }
             }
             if (isInBound) {
@@ -462,9 +461,14 @@ fun ObstacleInput(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .border(1.dp, Color.Black)
+                        .border(1.dp, Color.Black),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "Drop to Delete")
+                    Image(
+                        painter = painterResource(R.drawable.delete),
+                        modifier = Modifier.fillMaxSize(0.8f),
+                        contentDescription = ""
+                    )
                 }
             }
         }
@@ -473,14 +477,10 @@ fun ObstacleInput(
 
 @Composable
 fun ClearObstacles(viewModel: ArenaViewModel) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
+    Button(
+        onClick = { viewModel.removeAllObstacles() },
     ) {
-        Button(
-            onClick = { viewModel.removeAllObstacles() },
-        ) {
-            Text(text = "Clear all")
-        }
+        Text(text = "Clear all")
     }
 }
 
@@ -496,10 +496,20 @@ fun StartRobot(
 }
 
 @Composable
-fun sendObstacles(
+fun SendObstacles(
     bluetoothService: BluetoothService,
     arenaUiState: ArenaUiState
 ) {
-    return
+    Button(onClick = {
+        MessageService.sendObstacles(
+            bts=bluetoothService,
+            obstacleList = arenaUiState.obstacles,
+            robotX = arenaUiState.robotPosX,
+            robotY = arenaUiState.robotPosY,
+            robotFacing = arenaUiState.robotFacing
+        )
+    }) {
+        Text(text="Send Obstacles")
+    }
 }
 

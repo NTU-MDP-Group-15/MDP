@@ -1,6 +1,7 @@
 package com.example.code.service
 
 import android.util.Log
+import com.example.code.ui.states.Obstacle
 
 class MessageService {
     companion object {
@@ -153,6 +154,37 @@ class MessageService {
 
         private fun isInteger(s: String?): Boolean {
             return s!!.toIntOrNull() != null
+        }
+
+        fun sendObstacles(bts: BluetoothService, obstacleList: List<Obstacle>,
+                          robotX: Int, robotY: Int, robotFacing: String) {
+
+
+            var resultString = "START/EXPLORE/(R,$robotX,$robotY,${toDegree(robotFacing)})/"
+
+            for (obstacle in obstacleList) {
+                val x = obstacle.xPos.toString().padStart(2,'0')
+                val y = obstacle.yPos.toString().padStart(2,'0')
+                val id = obstacle.id.toString().padStart(2,'0')
+                var degrees = toDegree(obstacle.facing!!)
+
+                val formedObstacle = "($id,$x,$y,$degrees)/"
+                resultString+=formedObstacle
+            }
+            resultString=resultString.dropLast(1)
+            bts.write(toByteArray(resultString))
+        }
+
+        private fun toDegree(facing: String) : String {
+            var degree = ""
+
+            when (facing) {
+                "N" -> degree = "0"
+                "S" -> degree = "180"
+                "E" -> degree = "-90"
+                "W" -> degree = "90"
+            }
+            return degree
         }
     }
 }

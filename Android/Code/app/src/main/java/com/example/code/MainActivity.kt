@@ -116,7 +116,7 @@ class MainActivity : ComponentActivity() {
                             // Screens
                             NavHost(
                                 navController = navController,
-                                startDestination = "Bluetooth",
+                                startDestination = "Arena",
                                 modifier = Modifier.padding(0.dp,5.dp)
                             ) {
                                 composable(route = "Bluetooth") {
