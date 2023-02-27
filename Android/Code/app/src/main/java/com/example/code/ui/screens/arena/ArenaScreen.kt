@@ -479,8 +479,12 @@ fun ObstacleInput(
 fun ClearObstacles(viewModel: ArenaViewModel) {
     Button(
         onClick = { viewModel.removeAllObstacles() },
+        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
     ) {
-        Text(text = "Clear all")
+        Text(
+            text = "CLEAR ALL",
+            color = Color.White
+        )
     }
 }
 
@@ -488,10 +492,15 @@ fun ClearObstacles(viewModel: ArenaViewModel) {
 fun StartRobot(
     bluetoothService: BluetoothService
 ) {
-    Button(onClick = {
-        MessageService.sendStartSignal(bts=bluetoothService)
-    }) {
-        Text(text="Start Task")
+    Button(
+        onClick = {
+        MessageService.sendStartSignal(bts=bluetoothService) },
+        colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF15AB13))
+    ) {
+        Text(
+            text="START",
+            color = Color.White
+        )
     }
 }
 
@@ -512,4 +521,6 @@ fun SendObstacles(
         Text(text="Send Obstacles")
     }
 }
+
+
 

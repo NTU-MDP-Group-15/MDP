@@ -99,7 +99,7 @@ class MessageService {
         }
 
         fun sendStartSignal(bts: BluetoothService) {
-            val msg = "Ready to start"
+            val msg = "START"
             bts.write(toByteArray(msg))
         }
 
