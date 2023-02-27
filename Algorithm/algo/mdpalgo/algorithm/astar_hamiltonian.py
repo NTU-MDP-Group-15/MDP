@@ -109,6 +109,6 @@ class AStarHamiltonian(object):
         for location in shortest_path[1:]:
             curr_target = next(filter(lambda x: x[3].obstacle.obstacle_id == location, self.target_grid_locations))
             self.ordered_targets.append(curr_target)
-        self.ordered_targets.append(self.start_cell)
+        #self.ordered_targets.append(self.start_cell)
 
         return self.ordered_targets

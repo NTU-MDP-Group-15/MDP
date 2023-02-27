@@ -179,8 +179,10 @@ class Simulator:
         """
 
         while constants.RPI_CONNECTED:
+            print("Connected")
             try:
-                txt = self.comms.recv()
+                txt = self.comms.client_socket.recv(1024)
+                print("Text: ", txt)
                 if (txt == None):
                     continue
 
@@ -369,7 +371,9 @@ class Simulator:
 
             # Path finding
             self.path_planner = PathPlan(self, self.grid, self.car, optimized_fastest_route)
+            logging.debug("Fastest Route: ", optimized_fastest_route)
             self.path_planner.start_robot()
+            
 
     def predict_on_finish(self):
         # call predict function after finishing task

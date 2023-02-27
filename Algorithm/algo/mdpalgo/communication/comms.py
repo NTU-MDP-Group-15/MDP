@@ -50,6 +50,7 @@ class AlgoClient:
         try:
             # Decode : Converting from Byte to UTF-8 format.
             raw_bytes = self.receive_message_with_size()
+            print(raw_bytes)
             if raw_bytes is not None:
                 message = self.decode(raw_bytes)
                 if (len(message) <= MAX_MESSAGE_LENGTH_PRINT):
@@ -65,6 +66,7 @@ class AlgoClient:
             raise error
 
     def send(self, message):
+        print("Called send")
         try:
             print(f'[Algo] Message to Algo Server: {message}')
             self.send_message_with_size(self.encode(message))
@@ -112,10 +114,10 @@ class AlgoClient:
 
 # Standalone testing.
 if __name__ == '__main__':
-    constants.WIFI_IP = constants.TEST_IP # use the testing IP
+    constants.WIFI_IP = constants.MY_IP # use the testing IP
     client = AlgoClient()
     connect_status = client.connect()
-    assert (connect_status) # if the server is up, this should be true
+    assert (connect_status) # if the server is up, this should be truehi
 
     # import the libraries for parsing messages
     from mdpalgo.communication.message_parser import MessageParser, MessageType

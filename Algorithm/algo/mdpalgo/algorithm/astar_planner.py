@@ -91,9 +91,8 @@ class AutoPlanner():
 
         self.node_index_in_yet_to_visit = 2
         self.distance_calculator = Distance()
-
         self.obs_coords = []
-
+        self.full_path = []
     def initialize_node(self, node_position: list) -> ImprovedNode:
         """f, h, g are all initialized to 0"""
         return ImprovedNode(None, tuple(node_position))
@@ -401,17 +400,53 @@ class AutoPlanner():
         """Return a list of string of movements"""
         node = current_node
         movements = []
+        movements_str = []
         path = []
 
         while node.pose != self.start_node.pose:
             # grow the path backwards and backtrack
+            movements_str.append(node.move_from_parent.value)
             movements.append(node.move_from_parent)
             path.append(self.get_path_from_parent(node))
             node = node.parent
 
-        movements.reverse()                 # reverse the path from start to goal
+        movements.reverse() # reverse the path from start to goal
+        movements_str.reverse()
         path.reverse()
-        return movements, path
+        movements_str = self.process_movement_string(movements_str)
+        self.full_path.append(movements_str)
+
+        print("Current Full Path: ", self.full_path)
+        return movements, path, movements_str
+
+    def process_movement_string(self,arr):
+        if not arr:
+            return []
+        # Initialize variables to keep track of current tag and count
+        current_tag = arr[0]
+        current_count = 1
+
+        # Initialize empty list to store tagged array
+        tagged_arr = []
+
+        # Loop through each element in the array, starting from the second element
+        for i in range(1, len(arr)):
+            # If the current element is the same as the previous element, increment count
+            if arr[i] == current_tag:
+                current_count += 1
+            # If the current element is different from the previous element, add the tagged version of the previous tag and count to the tagged array
+            else:
+                current_count_str = str(current_count*10).zfill(3)
+                tagged_arr.append(current_tag + current_count_str)
+                # Reset current tag and count to the new element
+                current_tag = arr[i]
+                current_count = 1
+
+        current_count_str = str(current_count*10).zfill(3)
+        tagged_arr.append(current_tag + current_count_str)
+
+        # Print the tagged array
+        return tagged_arr
 
     def get_path_from_parent(self, node) -> list:
         parent_node = node.parent
@@ -479,7 +514,6 @@ if __name__ == "__main__":
     for node in auto_planner.children_current_node:
         print(f"Child: (x, y, dir) = ({node.pose.x}, {node.pose.y}, {node.pose.direction})")
     movements = auto_planner.get_movements_and_path_to_goal(maze, cost, start, end)[0]
-    print(movements)
     #assert movements == ['F', 'F', 'F', 'BR', 'B', 'B', 'FR']
 
     # test the transformation methods
