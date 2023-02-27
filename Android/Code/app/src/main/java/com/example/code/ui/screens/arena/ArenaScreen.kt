@@ -37,6 +37,7 @@ fun ArenaScreen(
 
     Row(
         modifier = Modifier.fillMaxSize(),
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         // Arena Grid
         Column(
@@ -55,13 +56,10 @@ fun ArenaScreen(
             modifier = Modifier
                 .fillMaxHeight(1f)
                 .fillMaxWidth(1f)
-                .padding(0.dp, 0.dp, 0.dp, 0.dp)
         ) {
             StatusDisplay(arenaUiState = arenaUiState)
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             TaskModeInput(viewModel = viewModel)
-            GridSizeInput(viewModel = viewModel, arenaUiState = arenaUiState)
-            //SetRobotOrientation(viewModel = viewModel, arenaUiState = arenaUiState)
             ObstacleInput(
                 viewModel = viewModel,
                 arenaUiState = arenaUiState,
@@ -72,9 +70,9 @@ fun ArenaScreen(
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             Text(text = "Robot Status", fontSize = 20.sp)
             TextField(
-                modifier = Modifier
-                    .fillMaxHeight(0.7f)
-                    .fillMaxWidth(1f),
+//                modifier = Modifier
+//                    .fillMaxHeight(0.5f)
+//                    .fillMaxWidth(1f),
                 value = arenaUiState.robotStatusMessage,
                 onValueChange = {},
                 readOnly = true
@@ -89,9 +87,12 @@ fun ArenaScreen(
 @Composable
 fun StatusDisplay(arenaUiState: ArenaUiState) {
     Row(modifier = Modifier.fillMaxWidth(1f)) {
+        var btStatus = "Not connected"
+        if (arenaUiState.bluetoothConnectionStatus) {
+            btStatus = "Connected"
+        }
         Text(
-            text = "${arenaUiState.taskMode} | " +
-                    "${arenaUiState.gridWidth}, ${arenaUiState.gridHeight} | ",
+            text = "${arenaUiState.taskMode} | $btStatus",
             fontWeight = FontWeight.ExtraBold
         )
     }
@@ -103,7 +104,7 @@ fun ArenaGrid(
     viewModel: ArenaViewModel,
     bluetoothService: BluetoothService
 ) {
-    val coordinateFontSize = 13.sp
+    val coordinateFontSize = 15.sp
     Box(
         modifier = Modifier
             .fillMaxWidth(1f)
@@ -158,7 +159,7 @@ fun GridBox(
     yCoordinate: Int,
 ) {
     DropItem<Obstacle>(
-        modifier = Modifier.size(20.dp)
+        modifier = Modifier.size(25.dp)
     ) { isInBound, obstacle ->
         val self =
             arenaUiState.obstacles.filter { (it.xPos == xCoordinate) && (it.yPos == yCoordinate) }
@@ -173,12 +174,9 @@ fun GridBox(
                 LaunchedEffect(key1 = obstacle) {
                     if (obstacle.xPos != null && obstacle.xPos != xCoordinate) {
                         viewModel.removeObstacle(obstacleID = obstacle.id)
-                        MessageService.sendObstaclePlacement(
+                        MessageService.sendSubObstacle(
                             bts = bluetoothService,
-                            action = "SUB",
                             id = obstacle.id,
-                            x = obstacle.xPos,
-                            y = obstacle.yPos!!
                         )
                         viewModel.repositionObstacle(
                             Obstacle(
@@ -188,9 +186,8 @@ fun GridBox(
                                 facing = obstacle.facing
                             )
                         )
-                        MessageService.sendObstaclePlacement(
+                        MessageService.sendAddObstacle(
                             bts = bluetoothService,
-                            action = "ADD",
                             id = obstacle.id,
                             x = xCoordinate,
                             y = yCoordinate
@@ -212,9 +209,8 @@ fun GridBox(
                                 facing = "N"
                             )
                         )
-                        MessageService.sendObstaclePlacement(
+                        MessageService.sendAddObstacle(
                             bts = bluetoothService,
-                            action = "ADD",
                             id = id,
                             x = xCoordinate,
                             y = yCoordinate
@@ -231,6 +227,9 @@ fun GridBox(
             if (isInBound) {
                 bgColor = Color.Gray.copy(0.5f)
             }
+            if (inRobotBound(xCoordinate,yCoordinate,arenaUiState)) {
+                bgColor = Color.Red.copy(0.4f)
+            }
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -242,6 +241,23 @@ fun GridBox(
             }
         }
     }
+}
+
+private fun inRobotBound(
+    x: Int,
+    y: Int,
+    arenaUiState: ArenaUiState
+) : Boolean {
+    var inXBound = false
+    var inYBound = false
+
+    if (x in arenaUiState.robotPosX-1 ..  arenaUiState.robotPosX+1) {
+        inXBound = true
+    }
+    if (y in arenaUiState.robotPosY-1 ..  arenaUiState.robotPosY+1) {
+        inYBound = true
+    }
+    return inXBound && inYBound
 }
 
 @Composable
@@ -320,7 +336,6 @@ fun DrawRobot(
             .fillMaxSize()
             .border(1.dp, Color.Black)
             .aspectRatio(1f)
-            .background(Color.Red.copy(0.4f))
     ) {
         Canvas(
             modifier = Modifier
@@ -374,10 +389,8 @@ fun TaskModeInput(viewModel: ArenaViewModel) {
     val taskModes = listOf(imgReg, fastCar)
 
     Row(
-        modifier = Modifier.padding(0.dp, 0.dp, 0.dp, spacerDP),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "Task Mode:", fontWeight = FontWeight.Bold)
         taskModes.forEach { task ->
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -398,66 +411,6 @@ fun TaskModeInput(viewModel: ArenaViewModel) {
 }
 
 @Composable
-fun GridSizeInput(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
-    var width by remember { mutableStateOf("20") }
-    var height by remember { mutableStateOf("20") }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth(1f)
-            .padding(0.dp, 0.dp, 0.dp, spacerDP),
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = "Enter Grid Size", fontWeight = FontWeight.Bold)
-        Text(text = "X: ")
-        TextField(
-            modifier = Modifier.width(70.dp),
-            value = width,
-            onValueChange = { newX: String ->
-                if (newX != "") {
-                    val w = newX.toInt()
-                    if (w in 0..20) {
-                        viewModel.setGridSize(
-                            width = w,
-                            height = arenaUiState.gridHeight
-                        )
-                    }
-                }
-                if (newX.length <= 2) {
-                    width = newX
-                }
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-            )
-        )
-        Text(text = "Y: ")
-        TextField(
-            modifier = Modifier.width(70.dp),
-            value = height,
-            onValueChange = { newY: String ->
-                if (newY != "") {
-                    val h = newY.toInt()
-                    if (h in 0..20) {
-                        viewModel.setGridSize(
-                            width = arenaUiState.gridWidth,
-                            height = h
-                        )
-                    }
-                }
-                if (newY.length <= 2) {
-                    height = newY
-                }
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-            )
-        )
-    }
-}
-
-@Composable
 fun ObstacleInput(
     viewModel: ArenaViewModel,
     arenaUiState: ArenaUiState,
@@ -466,7 +419,6 @@ fun ObstacleInput(
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "Drag Obstacle onto Arena: ", fontWeight = FontWeight.Bold)
         DragTarget(
             dataToDrop = Obstacle(id = arenaUiState.nextObsID, facing = "N")
         ) {
@@ -491,12 +443,9 @@ fun ObstacleInput(
             if (obstacle != null) {
                 LaunchedEffect(key1 = obstacle) {
                     viewModel.removeObstacle(obstacleID = obstacle.id)
-                    MessageService.sendObstaclePlacement(
+                    MessageService.sendSubObstacle(
                         bts = bluetoothService,
-                        action = "SUB",
                         id = obstacle.id,
-                        x = obstacle.xPos!!,
-                        y = obstacle.yPos!!
                     )
                 }
             }
@@ -527,75 +476,11 @@ fun ClearObstacles(viewModel: ArenaViewModel) {
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = "Remove all obstacles: ", fontWeight = FontWeight.Bold)
         Button(
             onClick = { viewModel.removeAllObstacles() },
         ) {
             Text(text = "Clear all")
         }
-    }
-}
-
-@Composable
-fun SetRobotOrientation(viewModel: ArenaViewModel, arenaUiState: ArenaUiState) {
-    var robotX by remember { mutableStateOf("0") }
-    var robotY by remember { mutableStateOf("0") }
-
-    Spacer(modifier = Modifier.padding(5.dp))
-    Row(
-        modifier = Modifier
-            .fillMaxWidth(1f)
-            .padding(0.dp, 0.dp, 0.dp, spacerDP),
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(text = "Robot Start Point", fontWeight = FontWeight.Bold)
-        Text(text = "X: ")
-        TextField(
-            modifier = Modifier.width(70.dp),
-            value = robotX,
-            onValueChange = { newX: String ->
-                if (newX != "") {
-                    val w = newX.toInt()
-                    if (w in 0..19) {
-                        viewModel.setRobotPosFacing(
-                            x = w,
-                            y = arenaUiState.robotPosY,
-                            facing = "N"
-                        )
-                    }
-                }
-                if (newX.length <= 2) {
-                    robotX = newX
-                }
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-            )
-        )
-        Text(text = "Y: ")
-        TextField(
-            modifier = Modifier.width(70.dp),
-            value = robotY,
-            onValueChange = { newY: String ->
-                if (newY != "") {
-                    val h = newY.toInt()
-                    if (h in 0..20) {
-                        viewModel.setRobotPosFacing(
-                            x = arenaUiState.robotPosX,
-                            y = h,
-                            facing = "N"
-                        )
-                    }
-                }
-                if (newY.length <= 2) {
-                    robotY = newY
-                }
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-            )
-        )
     }
 }
 
@@ -608,5 +493,13 @@ fun StartRobot(
     }) {
         Text(text="Start Task")
     }
+}
+
+@Composable
+fun sendObstacles(
+    bluetoothService: BluetoothService,
+    arenaUiState: ArenaUiState
+) {
+    return
 }
 

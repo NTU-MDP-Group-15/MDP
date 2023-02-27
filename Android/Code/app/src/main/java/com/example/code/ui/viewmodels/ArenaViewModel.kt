@@ -141,4 +141,17 @@ class ArenaViewModel : ViewModel() {
             currentState.copy(robotStatusMessage = message)
         }
     }
+
+    fun updateBTConnectionStatus(status: Int) {
+        if (status==3) {
+            _uiState.update {currentState ->
+                currentState.copy(bluetoothConnectionStatus = true)
+            }
+        }
+        else {
+            _uiState.update {currentState ->
+                currentState.copy(bluetoothConnectionStatus = false)
+            }
+        }
+    }
 }

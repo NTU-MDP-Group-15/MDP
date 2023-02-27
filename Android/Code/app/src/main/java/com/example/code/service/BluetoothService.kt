@@ -233,6 +233,7 @@ class BluetoothService(
     private fun connectionFailed() {
         Log.i(TAG, "connectionFailed()")
         mState = STATE_NONE
+        arenaViewModel.updateBTConnectionStatus(mState)
         // Start the service over to restart listening mode
         this@BluetoothService.start()
     }
@@ -240,6 +241,7 @@ class BluetoothService(
     private fun connectionLost() {
         Log.i(TAG, "connectionLost()")
         mState = STATE_NONE
+        arenaViewModel.updateBTConnectionStatus(mState)
         // Start the service over to restart listening mode
         this@BluetoothService.start()
     }
@@ -423,6 +425,7 @@ class BluetoothService(
             mmInStream = tmpIn
             mmOutStream = tmpOut
             mState = STATE_CONNECTED
+            arenaViewModel.updateBTConnectionStatus(mState)
             Log.i(TAG, "ConnectedThread Initialised")
         }
 

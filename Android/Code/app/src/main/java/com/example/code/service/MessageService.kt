@@ -24,7 +24,8 @@ class MessageService {
         }
 
         private fun toByteArray(msg: String): ByteArray {
-            return msg.toByteArray(Charsets.UTF_8)
+            val payload = msg + " "
+            return payload.toByteArray(Charsets.UTF_8)
         }
 
         // C4: Robot Status
@@ -73,16 +74,26 @@ class MessageService {
         }
 
         // C6: Obstacle Placement
-        // [Tag], Action, Obstacle_ID, Obstacle_X_Coordinate, Obstacle_Y_Coordinate
-        fun sendObstaclePlacement(bts: BluetoothService, action: String, id: Int, x: Int, y: Int) {
-            val msg = "[C6] $action $id $x $y"
+        // Action,ID,X,Y,Facing
+        // e.g. ADD,1,5,9,N
+        fun sendAddObstacle(bts: BluetoothService, id: Int, x: Int, y: Int) {
+            val msg = "ADD,$id,$x,$y"
+            bts.write(toByteArray(msg))
+        }
+
+        // C6: Obstacle Removal
+        // Action,ID
+        // e.g. SUB,1
+        fun sendSubObstacle(bts: BluetoothService, id: Int) {
+            val msg = "SUB,$id"
             bts.write(toByteArray(msg))
         }
 
         // C7: Obstacle Image Facing
-        // [Tag], Obstacle_ID, Facing
+        // ID,Facing
+        // e.g. 1,S
         fun sendObstacleFacing(bts: BluetoothService, id: Int, facing: String) {
-            val msg = "[C7] $id $facing"
+            val msg = "$id,$facing"
             bts.write(toByteArray(msg))
         }
 
@@ -119,7 +130,7 @@ class MessageService {
             list: List<String>,
             result: HashMap<String, String>
         ): String {
-            val validCoordinates = (0..19).toList()
+            val validCoordinates = (1..18).toList()
             val validFacings = listOf("N", "S", "E", "W")
             result["x"] = list[1]
             result["y"] = list[2]

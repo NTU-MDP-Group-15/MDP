@@ -9,11 +9,13 @@ data class ArenaUiState(
     val obstacles: List<Obstacle> = emptyList(),
     val nextObsID: Int = 1,
 
-    val robotPosX: Int = 0,
-    val robotPosY: Int = 0,
+    val robotPosX: Int = 1,
+    val robotPosY: Int = 1,
     val robotFacing: String = "N",
 
-    val robotStatusMessage: String = ""
+    val robotStatusMessage: String = "",
+
+    val bluetoothConnectionStatus: Boolean = false
 )
 
 data class Obstacle(

@@ -56,11 +56,19 @@ fun BluetoothScreen(
             modifier = Modifier.fillMaxWidth(0.9f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Available Devices", fontSize = 20.sp)
-            Spacer(modifier = Modifier.height(30.dp))
+            Text(text = "Paired Devices", fontSize = 20.sp)
+            Spacer(modifier = Modifier.height(10.dp))
+            LazyColumn(
+                devices = bluetoothService.mAdapter.bondedDevices.toList(),
+                service = bluetoothService,
+                height = 0.5f
+            )
+            Text(text = "Nearby Devices", fontSize = 20.sp)
+            Spacer(modifier = Modifier.height(10.dp))
             LazyColumn(
                 devices = bluetoothUiState.discoveredDevices.toList(),
-                service = bluetoothService
+                service = bluetoothService,
+                height = 1f
             )
         }
     }
@@ -70,12 +78,13 @@ fun BluetoothScreen(
 @Composable
 fun LazyColumn(
     devices: List<BluetoothDevice>,
-    service: BluetoothService
+    service: BluetoothService,
+    height: Float
 ) {
     val filteredDevices = devices.filter { it.name != null }
     LazyColumn(
         modifier = Modifier
-            .fillMaxHeight(1f)
+            .fillMaxHeight(height)
             .fillMaxWidth(1f)
     ) {
         items(filteredDevices) { device ->
