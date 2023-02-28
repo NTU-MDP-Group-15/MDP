@@ -44,7 +44,7 @@ class PathPlan(object):
             target = self.fastest_route.pop(0)
             self.plan_full_path_to(target)
 
-            if count_of_obs == 1:
+            if count_of_obs >= 1:
                 if constants.RPI_CONNECTED:
                     self.send_to_rpi()
 
@@ -210,7 +210,7 @@ class PathPlan(object):
         print("Remaining obstacles: ", self.obstacle_list_rpi)
         #self.simulator.comms.send(self.all_robot_pos_dict[self.obstacle_key])
         #self.simulator.comms.send(self.all_movements_dict[self.obstacle_key])
-        #self.simulator.comms.send(str(self.movement_string))
+        self.simulator.comms.send(str(self.movement_string))
         
 
     def set_total_num_move_from_movement_message(self, message: str):

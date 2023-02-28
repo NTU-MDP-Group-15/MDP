@@ -154,9 +154,10 @@ class Simulator:
         """Connect to RPi wifi server and start a thread to receive messages """
         self.comms = AlgoClient()
         self.comms.connect()
-        self.recv_thread = threading.Thread(target=self.receiving_process)
+        #self.recv_thread = threading.Thread(target=self.receiving_process)
         constants.RPI_CONNECTED = True
-        self.recv_thread.start()
+        self.receiving_process()
+        #self.recv_thread.start()
 
     def handle_worker_callbacks(self):
         """Check for callbacks from worker thread and handle them
@@ -167,6 +168,7 @@ class Simulator:
         callback = self.callback_queue.get(False)  # doesn't block
         if isinstance(callback, list):
             logging.info("Current callback: \n%s", callback)
+            logging.info("Logging 1: ", str(callback[1]))
             callback[0](callback[1])
         else:
             callback()
@@ -179,14 +181,14 @@ class Simulator:
         """
 
         while constants.RPI_CONNECTED:
-            print("Connected")
             try:
-                txt = self.comms.client_socket.recv(1024)
-                print("Text: ", txt)
-                if (txt == None):
-                    continue
+                if self.comms.client_socket is not None:
+                    txt = self.comms.client_socket.recv(1024)
+                    print("Text: ", txt)
+                    if (txt == None):
+                        continue
 
-                message_type_and_data = self.parser.parse(txt)
+                message_type_and_data = self.parser.parse(txt.decode())
                 message_data = message_type_and_data["data"]
                 if message_type_and_data["type"] == MessageType.START_TASK:  # From Android
                     self.on_receive_start_task_message(message_data)
@@ -205,28 +207,33 @@ class Simulator:
 
         if task == TaskType.TASK_EXPLORE:  # Week 8 Task
             # Reset first
-            self.callback_queue.put(self.reset_button_clicked)
-
+            #self.callback_queue.put(self.reset_button_clicked)
+            self.reset_button_clicked()
             # Set robot starting pos
             robot_params = message_data['robot']
             logging.info("Setting robot position: %s", robot_params)
             robot_x, robot_y, robot_dir = int(robot_params["x"]), int(robot_params["y"]), int(robot_params["dir"])
 
-            self.callback_queue.put([self.car.update_robot, [robot_dir, self.grid.grid_to_pixel((robot_x, robot_y))]])
-            self.callback_queue.put(self.car.redraw_car_refresh_screen)
+            #self.callback_queue.put([self.car.update_robot, [robot_dir, self.grid.grid_to_pixel((robot_x, robot_y))]])
+            #self.callback_queue.put(self.car.redraw_car_refresh_screen)
+            self.car.update_robot(robot_dir, self.grid.grid_to_pixel((robot_x, robot_y)))
+            self.car.redraw_car_refresh_screen()
 
             # Create obstacles given parameters
             logging.info("Creating obstacles...")
             for obstacle in message_data["obs"]:
                 logging.info("Obstacle: %s", obstacle)
                 id, grid_x, grid_y, dir = obstacle["id"], int(obstacle["x"]), int(obstacle["y"]), int(obstacle["dir"])
-                self.callback_queue.put([self.grid.create_obstacle, [grid_x, grid_y, dir]])
+                #self.callback_queue.put([self.grid.create_obstacle, [grid_x, grid_y, dir]])
+                self.grid.create_obstacle([grid_x, grid_y, dir])
 
             # Update grid, start explore
-            self.callback_queue.put(self.car.redraw_car_refresh_screen)
+            #self.callback_queue.put(self.car.redraw_car_refresh_screen)
+            self.car.redraw_car_refresh_screen()
 
             logging.info("[AND] Doing path calculation...")
-            self.callback_queue.put(self.start_button_clicked)
+            #self.callback_queue.put(self.start_button_clicked)
+            self.start_button_clicked()
 
         elif task == TaskType.TASK_PATH:  # Week 9 Task
             pass

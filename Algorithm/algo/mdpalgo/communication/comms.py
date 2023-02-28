@@ -66,7 +66,6 @@ class AlgoClient:
             raise error
 
     def send(self, message):
-        print("Called send")
         try:
             print(f'[Algo] Message to Algo Server: {message}')
             self.send_message_with_size(self.encode(message))
