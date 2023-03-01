@@ -1,11 +1,26 @@
 '''
 Filename: helper.py
-Version: v0.2
+Version: v1.1
 
 Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
 070223 - Basic helper functions and global variables for memory sharing between threads
 230223 - Added protocol variables
+
+-------------------------------------------------------------------
+| Command (5bit) |     Action                                     |
+|------------------------------------------------------------------
+|     00XXX      | stop Movement                                  |
+|     01XXX      | move forward for XXX distance (straight)       |
+|     02XXX      | turn left for XXX angle (forward)              |
+|     03XXX      | turn right for XXX angle (forward)             |
+|     11XXX      | move backward for XXX distance(straight line)  |
+|     12XXX      | turn left for XXX angle(backward               |
+|     13XXX      | turn right for XXX angle(backward)             |
+|     20001      | STM received command flag                      |
+|     20002      | STM completed command flag                     |
+|     DONE       |                                                |
+-------------------------------------------------------------------
 '''
 import os
 import queue
@@ -22,14 +37,24 @@ ANDROID_IN, ANDROID_OUT = queue.Queue(), queue.Queue()
 ALGO_IN, ALGO_OUT = queue.Queue(), queue.Queue() 
 IMGREC_IN, IMGREC_OUT = queue.Queue(), queue.Queue() 
 
-IP_ADDRESS = "192.168.15.1"
+SERVER_IP = "192.168.15.1"
 ALGO_PORT = 12345
 STM_PORT = 12346
 BT_PORT = 12347
-IMGREC_PORT = 12348
+IMGREC_PORT = 12350
 
 TAKE_PIC = "PIC"
 NO_OF_PIC = 5
+
+
+MOVEMENT_DICT = {
+    "F": "01",
+    "FL": "02",
+    "FR": "03", 
+    "B": "11",
+    "BL":  "12",
+    "BR": "13",
+}
 
 IMAGE_DICT = {
     "0": "Bullseye",

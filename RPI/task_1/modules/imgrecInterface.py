@@ -38,7 +38,7 @@ class ImageRecInterface:
                  no_of_pic=NO_OF_PIC, img_format=IMG_FORMAT, 
                  capture_index=0
                  ):
-        # super().__init__()        # thread
+
         self.lock = threading.Lock()
         self.rpi_ip = rpi_ip
         self.imgrec_port = imgrec_port
@@ -54,18 +54,11 @@ class ImageRecInterface:
         # self.idx = self.get_file_count()
 
         self.rpi_name = socket.gethostname()
-
-    # def run(self):
-    #     self.picam = self.get_video_capture()
-    #     self.img_sender = self.get_image_sender()
-    #     self.connect()
-    #     threading.Thread(target=self.listener).start()
-    #     # self.send_video()
-    
+        
     def __call__(self):
+        self.connect()
         self.picam = self.get_video_capture()
         self.img_sender = self.get_image_sender()
-        self.connect()
         threading.Thread(target=self.listener).start()
         threading.Thread(target=self.send_video).start()
 
@@ -117,7 +110,7 @@ class ImageRecInterface:
     def send_video(self):
         print("[IMGREC_VID/INFO] Starting video thread")
         while not self.kill_flag:
-            ret, frame = self.picam.read()
+            _, _ = self.picam.read()
             if self.send_image_flag:
                 for _ in range(self.no_of_pic):
                     ret, frame = self.picam.read()
@@ -131,30 +124,8 @@ class ImageRecInterface:
                         print("[IMGREC_VID/INFO] ret = False")
                         break
                 self.send_image_flag = False
-        self.picam.close()
-        
-    def show_video(self):
-        disconnect_flag = False
-        while self.picam.isOpened() and not disconnect_flag:
-            ret, frame = self.picam.read()
-            if ret == True:
-                # Display the resulting frame
-                cv2.imshow('Frame',frame)        
-                #cv2.imwrite('c1.png',frame)
-                self.img_sender.send_image("img", frame)
-                
-                # Press Q on keyboard to  exit
-                if cv2.waitKey(25) & 0xFF == ord('q'):
-                  break
-            # Break the loop
-            else: 
-                print("[IMGREC/INFO] ret = False")
-                break
-            
-        # When everything done, release the video capture object
+        print("[IMGREC_VID/INFO] Exiting video thread... Releasing cam")
         self.picam.release()
-        # Closes all the frames
-        cv2.destroyAllWindows()
         
     def listener(self) -> "workerThread":
         disconnect_flag = False
@@ -164,17 +135,13 @@ class ImageRecInterface:
             try:
                 rcv_data = self.c_sock.recv(1024).decode()
                 if rcv_data:
-                    if rcv_data == "disconnect": break
                     print(f"[IMGREC_LISTENER/INFO] IMGREC received {rcv_data}")
                     IMGREC_IN.put(rcv_data)
-            except KeyboardInterrupt:
-                disconnect_flag = True
             except:
-                disconnect_flag = True
+                print("[IMGREC_LISTENER/INFO] EXCEPTION")
                 traceback.print_exc()
-                pass
+                disconnect_flag = True
         print("[IMGREC_LISTENER/INFO] Exiting listener thread")
-        self.stop_vid_flag = True
     
 if __name__ == "__main__":
     imInt = ImageRecInterface()

@@ -1,6 +1,6 @@
 '''
 Filename: stmInterface.py
-Version: v0.5
+Version: v1.2
 
 Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
@@ -10,26 +10,25 @@ Class for setting up connection sockets for algo
 210223 - Replaced self.disconnected_flag to self.kill_flag
          disconnect_flag is now local variable
 230223 - Added threading locks for receiving
-         
+
 -------------------------------------------------------------------
 | Command (5bit) |     Action                                     |
 |------------------------------------------------------------------
 |     00XXX      | stop Movement                                  |
-|     01XXX      | move forward for xx distance (straight)        |
+|     01XXX      | move forward for XXX distance (straight)       |
 |     02XXX      | turn left for XXX angle (forward)              |
 |     03XXX      | turn right for XXX angle (forward)             |
-|     11XXX      | move backward for XX distance(straight line)   |
-|     12XXX      | turn left for xxx angle(backward               |
-|     13XXX      | turn right for xxx angle(backward)             |
+|     11XXX      | move backward for XXX distance(straight line)  |
+|     12XXX      | turn left for XXX angle(backward               |
+|     13XXX      | turn right for XXX angle(backward)             |
 |     20001      | STM received command flag                      |
 |     20002      | STM completed command flag                     |
+|     DONE       |                                                |
 -------------------------------------------------------------------
-20XXX - finish bit to send to android
-"done" (4byte) as acknowledgement
 Queue for instructions (ack before sending in next)
 '''
-
 import serial
+import time
 import traceback
 import threading
 from .helper import STM_IN, STM_OUT, TAKE_PIC
@@ -87,6 +86,7 @@ class STMInterface:
                                          stopbits=self.stopbits, 
                                          timeout=self.timeout)
                 print(f"[STM/INFO] Connected to STM via {self.port}")
+                break
             except:
                 print(f"[STM/INFO] Failed connection on port: {self.port}")
                 self.port = '/dev/ttyUSB1'
@@ -99,12 +99,12 @@ class STMInterface:
                                              stopbits=self.stopbits, 
                                              timeout=self.timeout)
                     print(f"[STM/INFO] Connected to STM via {self.port}")
+                    break
                 except:
                     print(f"[STM/ERROR] Failed to connect on {self.port}")
                     self.kill_flag = True     
                     traceback.print_exc()
-                finally: break
-            finally: break
+
 
     def disconnect(self):
         print(f"[STM/INFO] Disconnecting on {self.port}")
@@ -114,13 +114,21 @@ class STMInterface:
             print(f"[STM/Error] Failed to disconnect")
             traceback.print_exc()
 
-    def decode_and_send__instr(self, instr):
+    def decode_and_send__instr(self, instr) -> None:
+        """
+        Receives a string of instruction, splits the string into sub instructions
+        before sending
+
+        Args:
+            instr (str): Strings of instructions - "01020, 02090, ..."
+        """
         sub_instr_arr = instr.split(',')
         print(f"[STM/INFO] {sub_instr_arr}")
         
         for sub_instr in sub_instr_arr:
-            sub_instr = sub_instr.rstrip().encode()
+            sub_instr = sub_instr.lstrip().rstrip().encode()
             print(f"[STM/INFO] Sending {sub_instr}")
+            time.sleep(0.5)
             self.stm.write(sub_instr)
             self.stm.flush()            # self.stm.flushInput()
             
@@ -162,11 +170,11 @@ class STMInterface:
         while not disconnect_flag and not self.kill_flag:
             try:
                 if not STM_OUT.empty():
-                    send_data = STM_OUT.get().encode()
-                    # print(f"[STM_SENDER/INFO] Sending to STM: {send_data}")
+                    send_data = STM_OUT.get()
+                    #print(f"[STM_SENDER/INFO] Sending to STM: {send_data}")
                     self.decode_and_send__instr(send_data)
-                    # self.stm.write(send_data)
-                    # self.stm.flush()        # self.stm.flushInput()
+                    #self.stm.write(send_data.encode())
+                    #self.stm.flush()        # self.stm.flushInput()
             except:
                 traceback.print_exc()
         print("[STM_SENDER/INFO] Exiting sender thread")
@@ -178,7 +186,7 @@ class STMInterface:
 if __name__ == "__main__":
     import traceback
     stmTest = STMInterface()
-    stmTest.start()
+    # stmTest()
     while True:
         try:
             u_input = input(">")
