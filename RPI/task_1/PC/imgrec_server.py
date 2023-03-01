@@ -1,20 +1,24 @@
-'''
+"""
+Filename: imgrec_server.py
+Version: v1.2
+
 pip install yolov5 instead of ultralytics 
 
-'''
+! Updates (DDMMYY)
+010323 - Moved getting most occuring id from RPI to server
+"""
 import os
 import cv2
-import imagezmq
-import imutils
-import numpy as np
-import torch
 import time
+import torch
+import imagezmq
+import numpy as np
 import socket
-import yolov5
-import re
 import traceback
 
-from PIL import Image
+# import imutils
+# import yolov5
+# from PIL import Image
 
 
 MIN_CONFIDENCE_THRESHOLD = 0.75         # Change this to ensure no double results
@@ -22,13 +26,14 @@ NON_RED_CONFIDENCE_THRESHOLD = 0.55
 NMS_IOU = 0.55
 
 
-IMGREC_PORT = 12348
+IMGREC_PORT = 12350
 RPI_IP = "192.168.15.1"
 ZMQ_IP = "192.168.15.69"
 ZMQ_PORT = 5555
 
-MODEL_PATH = os.path.join(".", "bestv5.pt")
-YOLO_PATH = os.path.join("..","yolov5")
+MODEL_PATH = os.path.join(".", "bestv5.pt")     # ./bestv5.pt .\bestv5.pt
+YOLO_PATH = os.path.join(".","YOLOv5")
+NO_OF_PIC = 5
 
 class ImgRecServer:
     def __init__(self, rpi_ip=RPI_IP, imgrec_port=IMGREC_PORT, 
@@ -36,6 +41,8 @@ class ImgRecServer:
                  model_path=MODEL_PATH, yolo_path=YOLO_PATH,
                  ):
         
+        self.id_array = list()        
+        self.frame_counter = 0
         self.rpi_ip = rpi_ip
         self.imgrec_port = imgrec_port
         self.zmq_ip = zmq_ip
@@ -74,18 +81,67 @@ class ImgRecServer:
         return c_sock
         
     def __call__(self):
-        print("[IMGREC_S/INFO] Ready")
-    
+        print("[IMGREC_S/INFO] Ready and listening for frames")
         while True:
             try:
                 (rpi_name, frame) = self.image_hub.recv_image()
                 self.image_hub.send_reply(b'OK')      # Required in REQ/REP
-                # print("[IMGREC_S/INFO] Received frame")
-                cv2.imshow(rpi_name, frame)
-                cv2.waitKey(1)
-                 
+                print("[IMGREC_S/INFO] Received frame")
+
+                # cv2.imshow(rpi_name, frame)
+                # cv2.waitKey(1)
                 results = self.model(frame)
+                # results.save()
                 # results.show()            # show image with box
+                pd = results.pandas().xyxy[0]
+                
+                # Get highest confidence ID based off all detection
+                highest_conf_id = self.get_highest_confidence_id(pd)
+                
+                # Add id to array
+                self.id_array.append(highest_conf_id)
+                if len(self.id_array) == NO_OF_PIC:
+                    most_occurring_id = int(max(set(self.id_array), key=self.id_array.count))                    
+                    self.c_sock.sendall(str(most_occurring_id).encode())
+                    self.id_array = list()
+                    
+            except KeyboardInterrupt:
+                print("[IMGREC_S/INFO] KeyboardInterrupt received")
+                self.c_sock.sendall(b"disconnect")
+                break
+            
+            except:
+                self.c_sock.sendall(b"disconnect")
+                traceback.print_exc()   
+                break  
+        cv2.destroyAllWindows()
+        
+    def get_highest_confidence_id(self, pd) -> int:
+        if len(pd) == 0: return 99
+        else:
+            highest_confidence = pd['confidence'].max()
+            for idx, row in pd.iterrows():    
+                if row['confidence'] == highest_confidence:
+                    return row['name']
+                
+    def save_processed_photo(self, frame):
+        pass
+    
+    '''
+    # old
+    def __call__(self):
+        print("[IMGREC_S/INFO] Ready and listening for frames")
+        while True:
+            try:
+                (rpi_name, frame) = self.image_hub.recv_image()
+                self.image_hub.send_reply(b'OK')      # Required in REQ/REP
+                print("[IMGREC_S/INFO] Received frame")
+
+                # cv2.imshow(rpi_name, frame)
+                # cv2.waitKey(1)
+                
+                results = self.model(frame)
+                #results.show()            # show image with box
                 pd = results.pandas().xyxy[0]
                 id = self.process_data(pd)
                 self.c_sock.sendall(str(id).encode())
@@ -93,22 +149,23 @@ class ImgRecServer:
             except KeyboardInterrupt:
                 print("[IMGREC_S/INFO] KeyboardInterrupt received")
                 self.c_sock.sendall(b"disconnect")
-                cv2.destroyAllWindows()
                 break
             except:
                 self.c_sock.sendall(b"disconnect")
-                cv2.destroyAllWindows()
                 traceback.print_exc()   
                 break  
-            
+        cv2.destroyAllWindows()
+    
     def process_data(self, pd)  -> int:
-        if len(pd)==0: return 99
+        if len(pd)==0: 
+            self.id_array.append(99)
         else:
             highest_confidence = pd["confidence"].max()
-            for index, row in pd.iterrows():    
+            for idx, row in pd.iterrows():    
                 if row['confidence'] == highest_confidence:
-                    return row['name']
-
+                    self.id_array.append(row['name'])
+    '''
+    
 if __name__=="__main__":
     im = ImgRecServer()
     im()
