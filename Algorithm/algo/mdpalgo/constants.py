@@ -25,7 +25,7 @@ TURNING_RADIUS = 3
 
 # this is the buffer from the boundary of the grid
 # negative values mean the cell representing the robot can move outside of the grid
-BOUNDARY_BUFFER = -1
+BOUNDARY_BUFFER = 1
 
 FPS = 60
 
