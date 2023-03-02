@@ -114,10 +114,10 @@ class Grid(object):
         return target_locations
 
     def create_obstacle(self, arglist):
-        grid_x, grid_y, dir = arglist[0], arglist[1], arglist[2]
+        id, grid_x, grid_y, dir = arglist[0], arglist[1], arglist[2],arglist[3]
         # Set that location to one
         cell = self.get_cell_by_xycoords(grid_x, grid_y)
-        cell.create_obstacle(dir)
+        cell.create_obstacle(dir,id)
 
         self.add_cell_to_obstacle_list(cell)
         self.set_obstacle_boundary_cells_around(cell)

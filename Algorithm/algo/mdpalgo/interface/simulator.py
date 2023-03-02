@@ -218,7 +218,7 @@ class Simulator:
                 logging.info("Obstacle: %s", obstacle)
                 id, grid_x, grid_y, dir = obstacle["id"], int(obstacle["x"]), int(obstacle["y"]), int(obstacle["dir"])
                 #self.callback_queue.put([self.grid.create_obstacle, [grid_x, grid_y, dir]])
-                self.grid.create_obstacle([grid_x, grid_y, dir])
+                self.grid.create_obstacle([id, grid_x, grid_y, dir])
 
             # Update grid, start explore
             #self.callback_queue.put(self.car.redraw_car_refresh_screen)

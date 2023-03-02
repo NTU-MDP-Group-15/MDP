@@ -32,6 +32,7 @@ class PathPlan(object):
         self.num_move_completed_rpi = 0 # completed num moves by RPi to self.obstacle_key
         self.total_num_move_required_rpi = 0 # total required num moves by RPi to self.obstacle_key
         self.auto_planner = AutoPlanner()
+        self.full_path=[]
 
     def start_robot(self):
         # Remove robot starting position from fastest_route
@@ -74,6 +75,13 @@ class PathPlan(object):
 
         # Else, execute gray route
         self.execute_auto_search_result()
+
+    def get_target_id(self, target:list):
+            if target[3].id != None:
+                return target[3].id
+            else:
+                return ''
+    
 
     def get_target_pose_obstacle_cell_from(self, target: list):
         """Get the target pose and obstacle cell from a list of [x, y, dir, Cell]
@@ -210,7 +218,11 @@ class PathPlan(object):
         print("Remaining obstacles: ", self.obstacle_list_rpi)
         #self.simulator.comms.send(self.all_robot_pos_dict[self.obstacle_key])
         #self.simulator.comms.send(self.all_movements_dict[self.obstacle_key])
-        #self.simulator.comms.send(str(self.movement_string))
+        id=[]
+        id.append(str(self.get_target_id(self.target)))
+        self.movement_string=id+self.movement_string
+        self.simulator.comms.send(str(self.movement_string))
+        self.full_path.append(self.movement_string)
         
 
     def set_total_num_move_from_movement_message(self, message: str):
@@ -224,9 +236,8 @@ class PathPlan(object):
         self.total_num_move_required_rpi = len(message.split("/")[-1].split(","))
 
     def send_to_rpi_finish_task(self):
-        self.simulator.comms.send(str(self.auto_planner.full_path))
-        print(str(self.auto_planner.full_path))
-        #self.simulator.comms.send("FINISH/EXPLORE/")
+        self.simulator.comms.send(str(self.full_path))
+        self.simulator.comms.send("FINISH/EXPLORE/")
 
     def reset_num_move_completed_rpi(self):
         self.num_move_completed_rpi = 0

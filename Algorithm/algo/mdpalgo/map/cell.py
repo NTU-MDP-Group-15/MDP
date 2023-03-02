@@ -18,6 +18,7 @@ class Cell:
         self.y_coordinate = y_coordinate
         self.status = status
         self.obstacle = None
+        self.id = None
 
     def cell_clicked(self):
         if self.y_coordinate < 4 and self.x_coordinate < 4:
@@ -31,7 +32,7 @@ class Cell:
             self.obstacle = None
             self.status = CellStatus.EMPTY
 
-    def create_obstacle(self, dir):
+    def create_obstacle(self, dir, id):
         """Create an obstacle and set the cell status accordingly.
 
         Args:
@@ -40,6 +41,7 @@ class Cell:
         """
         self.obstacle = Obstacle(self.x_coordinate, self.y_coordinate, dir)
         self.status = CellStatus.OBS
+        self.id=id
 
     def set_obstacle_boundary_status(self):
         self.status = CellStatus.BOUNDARY
