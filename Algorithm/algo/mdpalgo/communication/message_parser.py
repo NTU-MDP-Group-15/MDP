@@ -6,7 +6,6 @@ import parse
 import base64
 import cv2
 import numpy as np
-from imagerec.helpers import convert_bgr_ndarray_to_rgb_image
 from PIL import Image
 
 class MessageType(Enum):
@@ -140,24 +139,24 @@ class MessageParser:
 
         return data_dict
 
-    def parse_image_taken(self, message:str) -> dict:
-        """Parse the image taken message to return the image as PIL Image.
+    # def parse_image_taken(self, message:str) -> dict:
+    #     """Parse the image taken message to return the image as PIL Image.
 
-        Example:
-            >>> message = "PHOTODATA/<image_string>"
-            >>> parse_image_taken(message)
-            {"image": <np_ndarray image>}
-        """
-        image_string = message.partition("/")[2]
-        data_dict = {}
-        img_bytes = base64.b64decode(image_string.encode("utf-8"))
-        jpg_as_np = np.frombuffer(img_bytes, dtype=np.uint8)
-        bgr_array = cv2.imdecode(jpg_as_np, cv2.IMREAD_COLOR)
+    #     Example:
+    #         >>> message = "PHOTODATA/<image_string>"
+    #         >>> parse_image_taken(message)
+    #         {"image": <np_ndarray image>}
+    #     """
+    #     image_string = message.partition("/")[2]
+    #     data_dict = {}
+    #     img_bytes = base64.b64decode(image_string.encode("utf-8"))
+    #     jpg_as_np = np.frombuffer(img_bytes, dtype=np.uint8)
+    #     bgr_array = cv2.imdecode(jpg_as_np, cv2.IMREAD_COLOR)
 
-        rgb_image: Image.Image = convert_bgr_ndarray_to_rgb_image(bgr_array)
+    #     rgb_image: Image.Image = convert_bgr_ndarray_to_rgb_image(bgr_array)
 
-        data_dict["image"] = rgb_image
-        return data_dict
+    #     data_dict["image"] = rgb_image
+    #     return data_dict
 
 if __name__ == "__main__":
     parser = MessageParser()

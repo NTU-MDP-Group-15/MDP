@@ -436,13 +436,18 @@ class AutoPlanner():
                 current_count += 1
             # If the current element is different from the previous element, add the tagged version of the previous tag and count to the tagged array
             else:
-                current_count_str = str(current_count*10).zfill(3)
+                if current_tag in ['FR','FL','BR','BL']:
+                    current_count_str = str(current_count*90).zfill(3)
+                else:
+                    current_count_str = str(current_count*10).zfill(3)
                 tagged_arr.append(current_tag + current_count_str)
                 # Reset current tag and count to the new element
                 current_tag = arr[i]
                 current_count = 1
-
-        current_count_str = str(current_count*10).zfill(3)
+        if current_tag in ['FR','FL','BR','BL']:
+            current_count_str = str(current_count*90).zfill(3)
+        else:
+            current_count_str = str(current_count*10).zfill(3)
         tagged_arr.append(current_tag + current_count_str)
 
         # Print the tagged array
