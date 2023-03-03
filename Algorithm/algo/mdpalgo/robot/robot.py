@@ -47,6 +47,8 @@ class Robot(object):
 
         self.optimized_target_locations = None
 
+        self.robot_pos_string = ""
+
     def get_pixel_pos(self):
         return self.pixel_pos
 
@@ -197,6 +199,7 @@ class Robot(object):
         return True
 
     def move_forward_steer_right(self):
+        #self.move_forward()
         initial_pixel_pos = self.get_pixel_pos()
         initial_angle = self.angle
         # Set position to stop moving
@@ -235,6 +238,7 @@ class Robot(object):
         self.update_robot(final_angle, final_pixel_pos)
 
     def move_forward_steer_left(self):
+        #self.move_forward()
         initial_pixel_pos = self.get_pixel_pos()
         initial_angle = self.angle
         # Set position to stop moving
@@ -276,6 +280,7 @@ class Robot(object):
         return True
 
     def move_backward_steer_right(self):
+        #self.move_backward()
         initial_pixel_pos = self.get_pixel_pos()
         initial_angle = self.angle
         # Set position to stop moving
@@ -316,6 +321,7 @@ class Robot(object):
         return True
 
     def move_backward_steer_left(self):
+        #self.move_backward()
         initial_pixel_pos = self.get_pixel_pos()
         initial_angle = self.angle
         # Set position to stop moving
@@ -358,7 +364,11 @@ class Robot(object):
     def update_robot(self, final_angle, final_pixel_pos):
         self.angle = final_angle
         self.pixel_pos = final_pixel_pos
+        #print("Robot new coordinates: ({}, {}, {})".format(self.grid.pixel_to_grid(final_pixel_pos)[0],self.grid.pixel_to_grid(final_pixel_pos)[1],final_angle))
         self.grid_x, self.grid_y = self.grid.pixel_to_grid(self.pixel_pos)
+        self.robot_pos_string = "{},{},{}".format(self.grid_x,self.grid_y,final_angle)
+        #print(self.robot_pos_string)
+        #print("Robot new coordinates: ({}, {}, {})".format(self.grid_x,self.grid_y,final_angle))
         self.redraw_car_refresh_screen()
 
     def check_if_turned(self, initial_angle, final_pixel_pos):

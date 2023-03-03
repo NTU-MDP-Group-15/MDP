@@ -221,7 +221,8 @@ class PathPlan(object):
         id=[]
         id.append(str(self.get_target_id(self.target)))
         self.movement_string=id+self.movement_string
-        self.simulator.comms.send(str(self.movement_string))
+        #self.simulator.comms.send(str(self.movement_string))
+        #self.simulator.comms.send(self.robot.robot_pos_string)
         self.full_path.append(self.movement_string)
         
 
@@ -237,7 +238,7 @@ class PathPlan(object):
 
     def send_to_rpi_finish_task(self):
         self.simulator.comms.send(str(self.full_path))
-        self.simulator.comms.send("FINISH/EXPLORE/")
+        #self.simulator.comms.send("FINISH/EXPLORE/")
 
     def reset_num_move_completed_rpi(self):
         self.num_move_completed_rpi = 0
