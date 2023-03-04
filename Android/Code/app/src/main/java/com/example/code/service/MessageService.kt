@@ -138,7 +138,7 @@ class MessageService {
             if ((!isInteger(result["x"])) || (!isInteger(result["y"])))
                 result["TAG"] = "Error"
             else {
-                result["facing"] = list[3]
+                result["facing"] = toFacing(list[3])
                 if (
                     (validCoordinates.contains(result["x"]!!.toInt())) &&
                     (validCoordinates.contains(result["y"]!!.toInt())) &&
@@ -150,8 +150,8 @@ class MessageService {
                 }
             }
             return "Invalid Robot Position or Facing"
-        }
-
+    }
+        
         private fun isInteger(s: String?): Boolean {
             return s!!.toIntOrNull() != null
         }
@@ -185,6 +185,18 @@ class MessageService {
                 "W" -> degree = "90"
             }
             return degree
+        }
+
+        private fun toFacing(degree: String) : String {
+            var facing = ""
+
+            when (degree) {
+                "0" -> facing = "N"
+                "180" -> facing = "S"
+                "-90" -> facing = "E"
+                "90" -> facing = "W"
+            }
+            return facing
         }
     }
 }
