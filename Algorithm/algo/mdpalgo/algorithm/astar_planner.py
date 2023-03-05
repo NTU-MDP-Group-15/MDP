@@ -416,7 +416,7 @@ class AutoPlanner():
         movements_str = self.process_movement_string(movements_str)
         self.full_path.append(movements_str)
 
-        print("Current Full Path: ", self.full_path)
+        #print("Current Full Path: ", self.full_path)
         return movements, path, movements_str
 
     def process_movement_string(self,arr):

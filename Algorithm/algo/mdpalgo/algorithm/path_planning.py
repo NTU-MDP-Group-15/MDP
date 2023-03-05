@@ -221,8 +221,6 @@ class PathPlan(object):
         id=[]
         id.append(str(self.get_target_id(self.target)))
         self.movement_string=id+self.movement_string
-        #self.simulator.comms.send(str(self.movement_string))
-        #self.simulator.comms.send(self.robot.robot_pos_string)
         self.full_path.append(self.movement_string)
         
 
@@ -238,6 +236,9 @@ class PathPlan(object):
 
     def send_to_rpi_finish_task(self):
         self.simulator.comms.send(str(self.full_path))
+        robot_pos_string = "/".join(self.robot.robot_pos)
+        full_robot_pos_string = "[C10]:" + robot_pos_string
+        self.simulator.comms.send(full_robot_pos_string) #Send full list of robot coordinates for android to update
         #self.simulator.comms.send("FINISH/EXPLORE/")
 
     def reset_num_move_completed_rpi(self):

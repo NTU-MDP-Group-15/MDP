@@ -47,7 +47,7 @@ class Robot(object):
 
         self.optimized_target_locations = None
 
-        self.robot_pos_string = ""
+        self.robot_pos = []
 
     def get_pixel_pos(self):
         return self.pixel_pos
@@ -364,11 +364,10 @@ class Robot(object):
     def update_robot(self, final_angle, final_pixel_pos):
         self.angle = final_angle
         self.pixel_pos = final_pixel_pos
-        #print("Robot new coordinates: ({}, {}, {})".format(self.grid.pixel_to_grid(final_pixel_pos)[0],self.grid.pixel_to_grid(final_pixel_pos)[1],final_angle))
         self.grid_x, self.grid_y = self.grid.pixel_to_grid(self.pixel_pos)
-        self.robot_pos_string = "{},{},{}".format(self.grid_x,self.grid_y,final_angle)
+        self.cur_robot_pos_string = "({},{},{})".format(self.grid_x,self.grid_y,final_angle)
+        self.robot_pos.append(self.cur_robot_pos_string)
         #print(self.robot_pos_string)
-        #print("Robot new coordinates: ({}, {}, {})".format(self.grid_x,self.grid_y,final_angle))
         self.redraw_car_refresh_screen()
 
     def check_if_turned(self, initial_angle, final_pixel_pos):

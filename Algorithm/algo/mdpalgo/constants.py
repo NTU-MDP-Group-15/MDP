@@ -41,5 +41,5 @@ RPI_IP_WIFI = "192.168.15.1"
 RPI_IP_WIFI_NEW = "192.168.15.69"
 MY_IP = "192.168.1.8"
 TEST_IP = "10.91.96.223" # Use this for easier testing RPi integration without RPi
-WIFI_IP = TEST_IP
+WIFI_IP = MY_IP
 PORT = 54321
