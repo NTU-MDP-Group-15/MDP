@@ -6,6 +6,8 @@ Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
 070223 - Basic helper functions and global variables for memory sharing between threads
 230223 - Added protocol variables
+060323 - Converted STM_IN/OUT Queue to Multiprocessor Queue
+         BACK TO MULTI-THREADING
 
 -------------------------------------------------------------------
 | Command (5bit) |     Action                                     |
@@ -24,6 +26,8 @@ Class for setting up connection sockets for algo
 '''
 import os
 import queue
+# import multiprocessing
+# from multiprocessing import Queue
 # import pickle
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +45,7 @@ SERVER_IP = "192.168.15.1"
 ALGO_PORT = 12345
 STM_PORT = 12346
 BT_PORT = 12347
-IMGREC_PORT = 12350
+IMGREC_PORT = 12348
 
 TAKE_PIC = "PIC"
 NO_OF_PIC = 5

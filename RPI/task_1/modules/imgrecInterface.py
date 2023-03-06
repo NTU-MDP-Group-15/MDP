@@ -1,6 +1,6 @@
 '''
 Filename: imgrecInterface.py
-Version: v0.7
+Version: v1.2
 
 Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
@@ -12,15 +12,15 @@ Class for setting up connection sockets for algo
 230223 - Updated taking photo logic
          Removed ImageRecInterface as thread
          send_video now sends exactly 5 frames
+060323 - Added disconnect function to close all relevant socket/interface
 '''
-import os
 import cv2
 import time
 import socket
 import imagezmq
 import traceback
 import threading
-from .helper import IMGREC_IN, IMGREC_OUT, IMGREC_PORT, IMG_DIR
+from .helper import IMGREC_IN, IMGREC_PORT
 
 HEIGHT = 480
 WIDTH = 640
@@ -31,15 +31,13 @@ ZMQ_PORT = 5555
 NO_OF_PIC = 5
 IMG_FORMAT = "jpg"
 
-# class ImageRecInterface(threading.Thread):
 class ImageRecInterface:
     def __init__(self, rpi_ip=RPI_IP, imgrec_port=IMGREC_PORT, 
                  zmq_ip=ZMQ_IP, zmq_port=ZMQ_PORT,  
                  no_of_pic=NO_OF_PIC, img_format=IMG_FORMAT, 
                  capture_index=0
                  ):
-
-        self.lock = threading.Lock()
+        
         self.rpi_ip = rpi_ip
         self.imgrec_port = imgrec_port
         self.zmq_ip=zmq_ip
@@ -49,18 +47,20 @@ class ImageRecInterface:
         self.img_format = img_format
         self.capture_index = capture_index
         
+        # Flags to control behaviours
+        self.lock = threading.Lock()
         self.kill_flag = False
         self.send_image_flag = False
-        # self.idx = self.get_file_count()
 
+        # self.idx = self.get_file_count()
         self.rpi_name = socket.gethostname()
         
     def __call__(self):
         self.connect()
         self.picam = self.get_video_capture()
         self.img_sender = self.get_image_sender()
-        threading.Thread(target=self.listener).start()
-        threading.Thread(target=self.send_video).start()
+        self.listen_thread = threading.Thread(target=self.listener).start()
+        self.send_thread = threading.Thread(target=self.send_video).start()
 
     def get_video_capture(self) -> cv2.VideoCapture:
         cap = cv2.VideoCapture(self.capture_index)
@@ -80,7 +80,7 @@ class ImageRecInterface:
     #     _, _, files = next(os.walk(IMG_DIR))
     #     return len(files)
     
-    def connect(self):
+    def connect(self) -> None:
         print("[IMGREC/INFO] Setting server socket")
         self.s_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s_sock.bind((self.rpi_ip, self.imgrec_port))
@@ -98,6 +98,19 @@ class ImageRecInterface:
                 print(f"[IMGREC/INFO] Connection from {self.c_addr}")
                 break
         self.s_sock.close()
+    
+    def disconnect(self) -> None:
+        print("[IMGREC/INFO] Setting kill_flag to True")
+        self.kill_flag = True
+        
+        self.listen_thread.join()
+        self.send_thread.join()
+        
+        if self.c_sock:
+            self.c_sock.close()
+        
+        if self.picam.isOpened():
+            self.picam.release()
 
     def take_picture(self, name="img{idx}.{img_format}"):
         # img_name = name.format(idx=self.idx, img_format=self.img_format)
@@ -107,7 +120,7 @@ class ImageRecInterface:
                 self.img_sender.send_image(self.rpi_name, frame)    
                 print(f"[IMGREC/INFO] Sending frames {_}")
 
-    def send_video(self):
+    def send_video(self) -> "workerThread":
         print("[IMGREC_VID/INFO] Starting video thread")
         while not self.kill_flag:
             _, _ = self.picam.read()
@@ -131,7 +144,7 @@ class ImageRecInterface:
         disconnect_flag = False
         
         print("[IMGREC_LISTENER/INFO] Starting listener thread")
-        while not disconnect_flag and not self.kill_flag:
+        while not self.kill_flag:
             try:
                 rcv_data = self.c_sock.recv(1024).decode()
                 if rcv_data:
@@ -142,7 +155,3 @@ class ImageRecInterface:
                 traceback.print_exc()
                 disconnect_flag = True
         print("[IMGREC_LISTENER/INFO] Exiting listener thread")
-    
-if __name__ == "__main__":
-    imInt = ImageRecInterface()
-    imInt()

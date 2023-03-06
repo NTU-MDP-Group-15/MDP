@@ -1,12 +1,13 @@
 '''
 Filename: btInterface.py
-Version: v1.1
+Version: v1.2
 
 Class for setting up bluetooth connection sockets
 ! Updates (DDMMYY)
 200223 - Added Queue
          Logic for task A5 (bulleyes target)
 270323 - Added connected_flags
+060323 - Added disconnect() for easier calling
 '''
 import os
 import traceback
@@ -14,38 +15,29 @@ import bluetooth as bt
 import threading
 from .helper import ANDROID_IN, ANDROID_OUT
 
-CLIENT_EXIT_FLAG = True
-CLIENT_SOCKET_TIMEOUT = 0.1
-LOCK = threading.Lock()
 UUID = "94F39D29-7D6D-437D-973B-FBA39E49D4EE"
 
-# class BTServerInterface(threading.Thread):
 class BTServerInterface:
     def __init__(self, name):
-        # super().__init__()
         os.system("sudo hciconfig hci0 piscan")
         self.name = name
         #self.s_port = bt.PORT_ANY
         self.uuid = UUID
-        # self.CLIENT_EXIT_FLAG = CLIENT_EXIT_FLAG
-        self.kill_flag = False
+
+        self.s_sock = None
+        self.c_sock = None
         
-    def run(self):
-        # print(f"[BT/INFO] Starting thread {self.name}")
-        connect = self.connect()
-        if connect: self.listener()
-        print("[BT/INFO] Disconnected")
-        self.c_sock.close()
-        print("[BT/INFO] Closing thread")
-        exit(1)
+        # Flags to control behaviour
+        self.lock = threading.Lock()
+        self.kill_flag = False
         
     def __call__(self):
         # print(f"[BT/INFO] Starting thread {self.name}")
         self.connect()
-        listener_thread = threading.Thread(target=self.listener)    
-        sender_thread = threading.Thread(target=self.sender)
-        listener_thread.start()
-        sender_thread.start()
+        self.listener_thread = threading.Thread(target=self.listener)    
+        self.sender_thread = threading.Thread(target=self.sender)
+        self.listener_thread.start()
+        self.sender_thread.start()
             
     def connect(self) -> bool:
         """
@@ -66,14 +58,22 @@ class BTServerInterface:
             return True
         except: return False
     
-    def disconnect(self):
-        self.c_sock.close()
+    def disconnect(self) -> None:
+        print(f"[BT/INFO] Setting kill_flag to True")
+        self.kill_flag = True
+        
+        self.listener_thread.join()
+        self.sender_thread.join()
+        if self.c_sock:        
+            self.c_sock.close()
+        
+        if self.s_sock:
+            self.s_sock.close()
         
     def listener(self) -> "workerThread":
         disconnect_flag = False
-
         print("[BT_LISTENER/INFO] Starting listener thread")
-        while not disconnect_flag and not self.kill_flag:
+        while not self.kill_flag:
             try:
                 data = self.c_sock.recv(1024)
                 if data:
@@ -84,15 +84,12 @@ class BTServerInterface:
                     ANDROID_IN.put(data) 
             except IOError:
                 pass
-            except KeyboardInterrupt:
-                print("[BT/INFO] KeyboardInterrupt received")
-                break
         print("[BT_LISTENER/INFO] Exiting listener thread")
          
     def sender(self) -> "workerThread":
         disconnect_flag = False
         print("[BT_SENDER/INFO] Starting sender thread")
-        while not disconnect_flag and not self.kill_flag:
+        while not self.kill_flag:
             try:
                 if not ANDROID_OUT.empty():
                     send_data = ANDROID_OUT.get()

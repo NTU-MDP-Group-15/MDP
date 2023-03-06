@@ -1,6 +1,6 @@
 '''
 Filename: stmInterface.py
-Version: v1.2
+Version: v1.3
 
 Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
@@ -10,6 +10,7 @@ Class for setting up connection sockets for algo
 210223 - Replaced self.disconnected_flag to self.kill_flag
          disconnect_flag is now local variable
 230223 - Added threading locks for receiving
+060323 - refactored disconnect() to allow easier calling  
 
 -------------------------------------------------------------------
 | Command (5bit) |     Action                                     |
@@ -27,10 +28,11 @@ Class for setting up connection sockets for algo
 -------------------------------------------------------------------
 Queue for instructions (ack before sending in next)
 '''
-import serial
 import time
+import serial
 import traceback
 import threading
+
 from .helper import STM_IN, STM_OUT, TAKE_PIC
 
 SERIAL_PORT = '/dev/ttyUSB0' 
@@ -40,40 +42,32 @@ PARITY = serial.PARITY_NONE
 STOPBITS = serial.STOPBITS_ONE
 TIMEOUT = 0
 
-#class STMInterface(threading.Thread):
 class STMInterface:
     def __init__(self, port=SERIAL_PORT, baud_rate=BAUD_RATE, byte_size=BYTESIZE, parity=PARITY, 
                  stopbits=STOPBITS, timeout=TIMEOUT):
-        # super().__init__()        # threads
         self.port = port
         self.baud_rate = baud_rate
         self.byte_size = byte_size
         self.parity = parity
         self.stopbits = stopbits
         self.timeout = timeout
-        self.receive_flag = False
-        self.complete_flag = False
-        self.kill_flag = False
         self.stm = None
+        
+        # Flags to control behaviour
         self.lock = threading.Lock()
+        self.kill_flag = False
+        self.complete_flag = False
+        self.receive_flag = False
         
     def __call__(self):
         self.connect()
-        listener_thread = threading.Thread(target=self.listener)
-        sender_thread = threading.Thread(target=self.sender)
-        listener_thread.start()
-        sender_thread.start()
-        #self.disconnect()
-
-    """
-    def run(self):
-        self.connect()
-        listener_thread = threading.Thread(target=self.listener)
-        sender_thread = threading.Thread(target=self.sender)
-        listener_thread.start()
-        sender_thread.start()
-        self.disconnect()
-    """ 
+        self.ls_thread = threading.Thread(target=self.listen_send)
+        self.ls_thread.start()
+        
+        # listener_thread = threading.Thread(target=self.listener)
+        #sender_thread = threading.Thread(target=self.sender)
+        #listener_thread.start()
+        #sender_thread.start()
 
     def connect(self):
         while True:
@@ -105,15 +99,65 @@ class STMInterface:
                     self.kill_flag = True     
                     traceback.print_exc()
 
-
     def disconnect(self):
-        print(f"[STM/INFO] Disconnecting on {self.port}")
-        try:
-            self.stm.close()
-        except:
-            print(f"[STM/Error] Failed to disconnect")
-            traceback.print_exc()
+        print(f"[STM/INFO] Setting kill_flag to True")
+        self.kill_flag = True
+        
+        self.ls_thread.join()
+        
+        if self.stm:
+            try:
+                print(f"[STM/INFO] Disconnecting on {self.port}")
+                self.stm.close()
+            except:
+                print(f"[STM/Error] Failed to disconnect")
+                traceback.print_exc()
+        
+    # Combines Listener & Sender thread into one thread
+    def listen_send(self) -> "workerThread":
+        print("[STM_THREAD/INFO] Starting thread")
+        while not self.kill_flag:
+            try:
+                if not STM_OUT.empty():
+                    instr = STM_OUT.get()
+                    sub_instr_arr = instr.split(',')
+                    print(f"[STM_THREAD/INFO] {sub_instr_arr}")
+                    
+                    for sub_instr in sub_instr_arr:
+                        sub_instr = sub_instr.lstrip().rstrip().encode()
+                        print(f"[STM_THREAD/INFO] Sending {sub_instr}")
 
+                        # Send sub instruction to STM
+                        #self.lock.acquire()
+                        self.stm.write(sub_instr)
+                        self.stm.flush()            # self.stm.flushInput()
+                        #self.lock.release()
+                        print(f"[STM_THREAD/INFO] Sent {sub_instr}")
+
+                        while not self.complete_flag: 
+                            # Retrieve data from STM
+                            self.lock.acquire()
+                            rcv_data = self.stm.readline()     # might not need lstrip/rstrip
+                            #self.stm.flushOutput()
+                            self.lock.release()
+                            
+                            if rcv_data != b'':
+                                print(f"[STM_THREAD/INFO] received {rcv_data}")
+                                # Done\x00 -> sub instruction completed
+                                # ready to send next sub intruction, break out of loop
+                                # if rcv_data == b'Done\x00':
+                                if rcv_data == b'D\x00\x00\x00D':
+                                    self.complete_flag = True
+                        
+                        self.complete_flag = False
+                    
+                    print(f"[STM/INFO] Completed instructions")
+                    print(f"[STM/INFO] Putting '{TAKE_PIC}' into STM_IN")
+                    STM_IN.put(TAKE_PIC)
+            except:
+                traceback.print_exc()
+        print("[STM_THREAD/INFO] Exiting thread")
+        
     def decode_and_send__instr(self, instr) -> None:
         """
         Receives a string of instruction, splits the string into sub instructions
@@ -182,15 +226,3 @@ class STMInterface:
     def send(self, data):
         self.stm.write(data)
         self.stm.flush()        # self.stm.flushInput()
-        
-if __name__ == "__main__":
-    import traceback
-    stmTest = STMInterface()
-    # stmTest()
-    while True:
-        try:
-            u_input = input(">")
-            STM_OUT.put(u_input)
-            
-        except KeyboardInterrupt:
-            break

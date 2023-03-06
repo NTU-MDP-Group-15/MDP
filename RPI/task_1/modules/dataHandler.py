@@ -1,6 +1,6 @@
 """
 Filename: dataHandler.py
-Version: v1.1
+Version: v1.2
 
 ! Updates (DDMMYY)
 270223 - Logic moved from main.py to dataHandler.py
@@ -9,6 +9,7 @@ Version: v1.1
          server.
          RPI just sends frames to imgrec server without waiting for return ID
          self.pattern -> PATTERN
+060323 - Added kill_thread() for easier calling        
 """
 import re
 import threading
@@ -26,19 +27,28 @@ class DataHandler:
         self.im_int = im_int
         self.algo_int = algo_int
         self.bt_int = bt_int
-        self.kill_flag = False
-        self.lock = threading.Lock()
+
         self.buffered_instr = list()
         self.str_instr = str()
-        self.no_of_instr = 0
         self.obstacle_id_order = list()
-        # self.id_array = list()
+        self.no_of_instr = 0
+        
+        # Flags to control behaviour
+        self.lock = threading.Lock()
+        self.kill_flag = False
         
     def __call__(self):
-        datahandler = threading.Thread(target=self.dataHandler)
-        datahandler.start()
-    
+        self.datahandler_thread = threading.Thread(target=self.dataHandler)
+        self.datahandler_thread.start()
+        
+    def kill_thread(self):
+        print("[DH/INFO] Setting kill_flag to True")
+        self.kill_flag = True
+        
+        self.datahandler_thread.join()
+        
     def dataHandler(self) -> "workerThread":
+        print("[DH_THREAD/INFO] Starting DataHandler thread")
         while not self.kill_flag:
             try:
                 if not STM_IN.empty():
@@ -51,18 +61,18 @@ class DataHandler:
                     self.imgrec_data()
             except Exception as e:
                 print(e)
-        print("[DH/INFO] Exiting DataHandler")
+        print("[DH_THREAD/INFO] Exiting DataHandler thread")
         
     def stm_data(self) -> None:
         """
         STM_IN will contain TAKE_PIC = "PIC"
         """
         data = STM_IN.get()
-        print(f"[DH/INFO] STM_IN: {data}")
+        print(f"[DH_STM/INFO] STM_IN: {data}")
         if data == TAKE_PIC:
-            # self.im_int.take_picture()
             # Flag set to true to start sending image
             self.im_int.send_image_flag = True
+
         # print(f"[DH/INFO] Putting '{data}' into ")
     
     def android_data(self) -> None:
@@ -71,7 +81,7 @@ class DataHandler:
         Data from ANDROID_IN will be in (category, data)     
         """
         data  = ANDROID_IN.get()
-        print(f"[DH/INFO] ANDROID_IN: {data}")
+        print(f"[DH_AND/INFO] ANDROID_IN: {data}")
 
         # requires some way to identify if its obstacle or results
         # Step 1: Send to Algo socket
@@ -105,9 +115,9 @@ class DataHandler:
         ID will be sent to ANDROID_OUT
         """        
         data = IMGREC_IN.get()
-        print(f"[DH/INFO] IMGREC_IN: {data}")
+        print(f"[DH_IMGREC/INFO] IMGREC_IN: {data}")
         obs_id = self.obstacle_id_order.pop(0)
-        print(f"[DH/INFO] Putting into ANDROID_OUT: [C9] {obs_id} {data}")        
+        print(f"[DH_IMGREC/INFO] Putting into ANDROID_OUT: [C9] {obs_id} {data}")        
         ANDROID_OUT.put(f"[C9] {obs_id} {data}")
         
         # Send nexts buffered instr
@@ -115,7 +125,6 @@ class DataHandler:
             STM_OUT.put(self.buffered_instr[0])
             self.buffered_instr.pop(0)
             
-    
     def algo_to_stm(self, ar) -> str:
         """
         Args:

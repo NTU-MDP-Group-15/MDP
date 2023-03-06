@@ -65,10 +65,12 @@ class MDPPi:
         self.im_int()
         self.algo_int()
         self.bt_int()
-
         print("[PI/INFO] All devices connected successfully")
+        
         self.dh()
         print("[PI/INFO] MainPI RUNNING")
+        
+        # Keep main thread alive to capture KeyboardInterrupt
         while True:
             try:
                 time.sleep(0.5)
@@ -78,12 +80,18 @@ class MDPPi:
                 break
         print("[PI/INFO] Exiting PI")
     
-    def kill_all_proc(self):
-        self.stm_int.kill_flag = True
-        self.im_int.kill_flag = True
-        self.algo_int.kill_flag = True
-        self.bt_int.kill_flag = True
-        self.dh.kill_flag = True
+    def kill_all_proc(self) -> None:
+        self.stm_int.disconnect()
+        self.im_int.disconnect()
+        self.algo_int.disconnect()
+        self.bt_int.disconnect()
+        self.dh.kill_thread()
+                
+        # self.stm_int.kill_flag = True
+        # self.im_int.kill_flag = True
+        # self.algo_int.kill_flag = True
+        # self.bt_int.kill_flag = True
+        # self.dh.kill_flag = True
         
 if __name__ == '__main__':
     pi = MDPPi()
