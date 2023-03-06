@@ -1,6 +1,6 @@
 """
 Filename: dataHandler.py
-Version: v1.2
+Version: v1.3
 
 ! Updates (DDMMYY)
 270223 - Logic moved from main.py to dataHandler.py
@@ -9,7 +9,8 @@ Version: v1.2
          server.
          RPI just sends frames to imgrec server without waiting for return ID
          self.pattern -> PATTERN
-060323 - Added kill_thread() for easier calling        
+060323 - Added kill_thread() for easier calling
+         Added logic for sending to ANDROID(coordinates) or STM(obstacle)        
 """
 import re
 import threading
@@ -100,14 +101,22 @@ class DataHandler:
         
         # DECODING/TRANSLATION OF ALGO INSTR 
         # ['F020', 'FR090', 'FL090'] = 01020,03090,02090
-        # [['F090', 'FR010'], ['B010', 'FR010', 'F040', 'FL020'], ['B020', 'FR020']]
-        # print(type(data))
+        # STM/[['01', 'FR090', 'FL090'], ['03', 'B020', 'FR090', 'F040'], 
+        #      ['02', 'FL090', 'B030', 'FR090', 'F010', 'FL180'], 
+        #      ['05', 'FR090', 'B010'], 
+        #      ['04', 'F020', 'BL090', 'B050', 'BL090', 'BR090']]
+        # AND/[C10] 1,1,0,3,3,-90,5,5,0,5,4,0,5,3,0,7,5,...
+        # to = STM, data = "[[...], [...]]"
+        to, data = data.split('/')
 
-        buffer_array = eval(data)
-     
-        for ar in buffer_array:
-            self.buffered_instr.append(self.algo_to_stm(ar))
-        self.no_of_instr = len(self.buffered_instr)
+        if to == "AND":
+            ANDROID_OUT.put(data)
+        elif to == "STM":
+            buffer_array = eval(data)
+        
+            for ar in buffer_array:
+                self.buffered_instr.append(self.algo_to_stm(ar))
+            self.no_of_instr = len(self.buffered_instr)
     
     def imgrec_data(self) -> None:
         """

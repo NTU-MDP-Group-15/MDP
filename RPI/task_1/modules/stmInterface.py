@@ -33,7 +33,7 @@ import serial
 import traceback
 import threading
 
-from .helper import STM_IN, STM_OUT, TAKE_PIC
+from .helper import STM_IN, STM_OUT, TAKE_PIC, ANDROID_OUT
 
 SERIAL_PORT = '/dev/ttyUSB0' 
 BAUD_RATE = 115200
@@ -147,6 +147,7 @@ class STMInterface:
                                 # ready to send next sub intruction, break out of loop
                                 # if rcv_data == b'Done\x00':
                                 if rcv_data == b'D\x00\x00\x00D':
+                                    ANDROID_OUT.put("Done")
                                     self.complete_flag = True
                         
                         self.complete_flag = False
