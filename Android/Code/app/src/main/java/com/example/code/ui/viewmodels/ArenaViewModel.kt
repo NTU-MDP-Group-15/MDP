@@ -148,7 +148,13 @@ class ArenaViewModel : ViewModel() {
 
     // Set Robot Position and Facing
     fun setRobotPosFacing() {
-        val count = _uiState.value.coordinateCounter
+        var count=0
+        if (_uiState.value.coordinateCounter <= _uiState.value.storedCoordinates.size-4) {
+            count = _uiState.value.coordinateCounter
+        }
+        else {
+            count = _uiState.value.storedCoordinates.size-3
+        }
 
         val x = _uiState.value.storedCoordinates[count].toInt()
         val y = _uiState.value.storedCoordinates[count + 1].toInt()

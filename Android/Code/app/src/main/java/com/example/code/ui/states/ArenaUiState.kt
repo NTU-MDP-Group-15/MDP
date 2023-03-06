@@ -18,7 +18,7 @@ data class ArenaUiState(
     val bluetoothConnectionStatus: Boolean = false,
 
     val storedCoordinates: List<String> = emptyList(),
-    val coordinateCounter: Int = 0
+    val coordinateCounter: Int = 3
 )
 
 data class Obstacle(
