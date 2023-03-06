@@ -10,7 +10,7 @@ from enum import Enum
 # This sets the margin between each Cell
 MARGIN = 2
 ONE_CELL = 20 + MARGIN
-THREE_CELL = 3 * ONE_CELL
+THREE_CELL = 2 * ONE_CELL
 dt = 0.2     # Max without messing up is 0.8
 class RobotMovement(Enum):
     FORWARD = "F"

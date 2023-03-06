@@ -33,6 +33,7 @@ class PathPlan(object):
         self.total_num_move_required_rpi = 0 # total required num moves by RPi to self.obstacle_key
         self.auto_planner = AutoPlanner()
         self.full_path=[]
+        self.robot_pos_string = []
 
     def start_robot(self):
         # Remove robot starting position from fastest_route
@@ -222,6 +223,8 @@ class PathPlan(object):
         id.append(str(self.get_target_id(self.target)))
         self.movement_string=id+self.movement_string
         self.full_path.append(self.movement_string)
+        self.robot_pos_string.append("/".join(self.robot.robot_pos))
+        self.robot.robot_pos.clear()
         
 
     def set_total_num_move_from_movement_message(self, message: str):
@@ -236,8 +239,8 @@ class PathPlan(object):
 
     def send_to_rpi_finish_task(self):
         self.simulator.comms.send(str(self.full_path))
-        robot_pos_string = "/".join(self.robot.robot_pos)
-        full_robot_pos_string = "[C10]:" + robot_pos_string
+        
+        full_robot_pos_string = "[C10]:" + "&".join(self.robot_pos_string)
         self.simulator.comms.send(full_robot_pos_string) #Send full list of robot coordinates for android to update
         #self.simulator.comms.send("FINISH/EXPLORE/")
 
