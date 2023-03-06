@@ -124,32 +124,60 @@ class ArenaViewModel : ViewModel() {
         }
     }
 
+    // Store Robot Positions and Facings
+    fun storeRobotPosFacing(payload: String) {
+        val coordinatesAndFacingList = payload.split(",")
+        _uiState.update { currentState ->
+            currentState.copy(
+                storedCoordinates = coordinatesAndFacingList
+            )
+        }
+    }
+
+    private fun toFacing(degree: String) : String {
+        var facing = ""
+
+        when (degree) {
+            "0" -> facing = "N"
+            "180" -> facing = "S"
+            "-90" -> facing = "E"
+            "90" -> facing = "W"
+        }
+        return facing
+    }
+
     // Set Robot Position and Facing
-    fun setRobotPosFacing(x: Int, y: Int, facing: String) {
+    fun setRobotPosFacing() {
+        val count = _uiState.value.coordinateCounter
+
+        val x = _uiState.value.storedCoordinates[count].toInt()
+        val y = _uiState.value.storedCoordinates[count + 1].toInt()
+        val facing = toFacing(_uiState.value.storedCoordinates[count + 2])
+
         _uiState.update { currentState ->
             currentState.copy(
                 robotPosX = x,
                 robotPosY = y,
-                robotFacing = facing
+                robotFacing = facing,
+                coordinateCounter = count + 3
             )
         }
     }
 
     // Set Robot Status Message
     fun setRobotStatusMessage(message: String) {
-        _uiState.update {currentState ->
+        _uiState.update { currentState ->
             currentState.copy(robotStatusMessage = message)
         }
     }
 
     fun updateBTConnectionStatus(status: Int) {
-        if (status==3) {
-            _uiState.update {currentState ->
+        if (status == 3) {
+            _uiState.update { currentState ->
                 currentState.copy(bluetoothConnectionStatus = true)
             }
-        }
-        else {
-            _uiState.update {currentState ->
+        } else {
+            _uiState.update { currentState ->
                 currentState.copy(bluetoothConnectionStatus = false)
             }
         }

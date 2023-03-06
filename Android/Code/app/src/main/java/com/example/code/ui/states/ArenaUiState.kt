@@ -15,7 +15,10 @@ data class ArenaUiState(
 
     val robotStatusMessage: String = "",
 
-    val bluetoothConnectionStatus: Boolean = false
+    val bluetoothConnectionStatus: Boolean = false,
+
+    val storedCoordinates: List<String> = emptyList(),
+    val coordinateCounter: Int = 0
 )
 
 data class Obstacle(

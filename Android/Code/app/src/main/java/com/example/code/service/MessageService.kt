@@ -15,6 +15,7 @@ class MessageService {
                 "[C4]" -> parseRobotStatus(list, result)
                 "[C9]" -> parseTargetIDFound(list, result)
                 "[C10]" -> parseRobotPosFacing(list, result)
+                "[C11]" -> updateRobotPosFacing(result)
                 else -> {
                     msg
                 }
@@ -126,29 +127,13 @@ class MessageService {
         }
 
         // C10: Robot Position and Facing
-        // [Tag], Robot_X_Coordinate, Robot_Y_Coordinate, Facing
+        // [Tag] ListOfPayload
         private fun parseRobotPosFacing(
             list: List<String>,
             result: HashMap<String, String>
         ): String {
-            val validCoordinates = (1..18).toList()
-            val validFacings = listOf("N", "S", "E", "W")
-            result["x"] = list[1]
-            result["y"] = list[2]
-            if ((!isInteger(result["x"])) || (!isInteger(result["y"])))
-                result["TAG"] = "Error"
-            else {
-                result["facing"] = toFacing(list[3])
-                if (
-                    (validCoordinates.contains(result["x"]!!.toInt())) &&
-                    (validCoordinates.contains(result["y"]!!.toInt())) &&
-                    (validFacings.contains(result["facing"]!!))
-                ) {
-                    result["TAG"] = "C10"
-                } else {
-                    result["TAG"] = "Error"
-                }
-            }
+            result["TAG"] = "C10"
+            result["payload"] = list[1]
             return "Invalid Robot Position or Facing"
     }
         
@@ -187,16 +172,9 @@ class MessageService {
             return degree
         }
 
-        private fun toFacing(degree: String) : String {
-            var facing = ""
-
-            when (degree) {
-                "0" -> facing = "N"
-                "180" -> facing = "S"
-                "-90" -> facing = "E"
-                "90" -> facing = "W"
-            }
-            return facing
+        private fun updateRobotPosFacing(result: HashMap<String, String>) : String {
+            result["TAG"] = "C11"
+            return "Update Robot Position"
         }
     }
 }

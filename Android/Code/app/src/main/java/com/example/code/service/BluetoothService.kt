@@ -450,11 +450,10 @@ class BluetoothService(
                             )
                         }
                         "C10" -> {
-                            arenaViewModel.setRobotPosFacing(
-                                x = result["x"]!!.toInt(),
-                                y = result["y"]!!.toInt(),
-                                facing = result["facing"]!!
-                            )
+                            arenaViewModel.storeRobotPosFacing(result["payload"]!!)
+                        }
+                        "C11" -> {
+                            arenaViewModel.setRobotPosFacing()
                         }
                         else -> bluetoothViewModel.addReceivedMessage(result["msg"]!!)
                     }
