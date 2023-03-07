@@ -365,7 +365,7 @@ class Robot(object):
         self.angle = final_angle
         self.pixel_pos = final_pixel_pos
         self.grid_x, self.grid_y = self.grid.pixel_to_grid(self.pixel_pos)
-        self.cur_robot_pos_string = "({},{},{})".format(self.grid_x,self.grid_y,final_angle)
+        self.cur_robot_pos_string = "{},{},{}".format(self.grid_x,self.grid_y,final_angle)
         self.robot_pos.append(self.cur_robot_pos_string)
         #print(self.robot_pos_string)
         self.redraw_car_refresh_screen()
