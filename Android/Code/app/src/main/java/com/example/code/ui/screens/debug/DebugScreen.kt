@@ -31,7 +31,8 @@ fun DebugScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth(0.5f)
-                .fillMaxHeight(1f),
+                .fillMaxHeight(1f)
+                .padding(start = 5.dp),
             verticalArrangement = Arrangement.Center
         ) {
             Text(text = "Send To Remote", fontSize = 20.sp)
@@ -66,8 +67,8 @@ fun DebugScreen(
             Spacer(modifier = Modifier.height(30.dp))
             TextField(
                 modifier = Modifier
-                    .fillMaxHeight(1f)
-                    .fillMaxWidth(1f),
+                    .fillMaxHeight(0.97f)
+                    .fillMaxWidth(0.95f),
                 value = bluetoothUiState.receivedMessages,
                 onValueChange = {},
                 readOnly = true

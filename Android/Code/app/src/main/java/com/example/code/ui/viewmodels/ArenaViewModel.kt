@@ -79,11 +79,6 @@ class ArenaViewModel : ViewModel() {
                 )
             )
         }
-//        MessageService.sendObstacleFacing(
-//            bts = bluetoothService,
-//            id = obstacle.id,
-//            facing = facing
-//        )
     }
 
     // Remove Obstacle

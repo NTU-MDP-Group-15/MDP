@@ -76,13 +76,6 @@ class MainActivity : ComponentActivity() {
             activityResultLauncher.launch(enableBluetoothIntent)
         }
 
-        // Request to make Device Discoverable for 300s
-//        val discoverableIntent: Intent =
-//            Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE).apply {
-//                putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
-//            }
-//        activityResultLauncher.launch(discoverableIntent)
-
         // Register for broadcasts when a device is discovered
         val foundFilter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         val startFilter = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED)

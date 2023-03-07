@@ -37,15 +37,6 @@ class BluetoothService(
     // Generic Bluetooth Serial Port Profile UUID for Debugging (as Server accepting connections)
     private val SERVER_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
 
-    // Unique UUID (to provide to RPi)
-//    private val MY_UUID: UUID = UUID.fromString("d3da3f39-8688-4d15-a47f-50fb82315496")
-
-    // UUID of RPi (as Client initiating connection)
-//    private val MY_UUID: UUID = UUID.fromString("94F39D29-7D6D-437D-973B-FBA39E49D4EE")
-
-    // For Yh's laptop
-    // private val MY_UUID: UUID = UUID.fromString("4C4C4544-0053-3010-8053-CAC04F573933")
-
     // Bluetooth Adapter
     val mAdapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 

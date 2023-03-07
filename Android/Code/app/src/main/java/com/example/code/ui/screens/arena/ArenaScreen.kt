@@ -60,7 +60,9 @@ fun ArenaScreen(
             Spacer(modifier = Modifier.padding(bottom = spacerDP))
             Text(text = "Robot Status", fontSize = 20.sp)
             TextField(
-                modifier = Modifier.fillMaxWidth(0.95f),
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .fillMaxHeight(0.3f),
                 value = arenaUiState.robotStatusMessage,
                 onValueChange = {},
                 readOnly = true
@@ -73,11 +75,11 @@ fun ArenaScreen(
                 arenaUiState = arenaUiState
             )
             Spacer(modifier = Modifier.padding(bottom = 15.dp))
-            ClearObstacles(viewModel = viewModel)
-            Spacer(modifier = Modifier.padding(bottom = spacerDP))
             Row(){
+                ClearObstacles(viewModel = viewModel)
+                Spacer(modifier = Modifier.padding(5.dp))
                 SendObstacles(bluetoothService = bluetoothService, arenaUiState = arenaUiState)
-                Spacer(modifier = Modifier.padding(spacerDP))
+                Spacer(modifier = Modifier.padding(5.dp))
                 StartRobot(bluetoothService = bluetoothService)
             }
         }
@@ -174,10 +176,6 @@ fun GridBox(
                 LaunchedEffect(key1 = obstacle) {
                     if (obstacle.xPos != null && obstacle.xPos != xCoordinate) {
                         viewModel.removeObstacle(obstacleID = obstacle.id)
-//                        MessageService.sendSubObstacle(
-//                            bts = bluetoothService,
-//                            id = obstacle.id,
-//                        )
                         viewModel.repositionObstacle(
                             Obstacle(
                                 id = obstacle.id,
@@ -186,17 +184,6 @@ fun GridBox(
                                 facing = obstacle.facing
                             )
                         )
-                        /*MessageService.sendAddObstacle(
-                            bts = bluetoothService,
-                            id = obstacle.id,
-                            x = xCoordinate,
-                            y = yCoordinate
-                        )
-                        MessageService.sendObstacleFacing(
-                            bts = bluetoothService,
-                            id = obstacle.id,
-                            facing = obstacle.facing!!
-                        )*/
                     } else if (obstacle.xPos != null) {
                         // do nothing
                     } else {
@@ -209,17 +196,6 @@ fun GridBox(
                                 facing = "N"
                             )
                         )
-//                        MessageService.sendAddObstacle(
-//                            bts = bluetoothService,
-//                            id = id,
-//                            x = xCoordinate,
-//                            y = yCoordinate
-//                        )
-//                        MessageService.sendObstacleFacing(
-//                            bts = bluetoothService,
-//                            id = id,
-//                            facing = "N"
-//                        )
                     }
                 }
             }
@@ -391,6 +367,10 @@ fun TaskModeInput(viewModel: ArenaViewModel) {
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Text(
+            text = "Task:",
+            fontWeight = FontWeight.Bold,
+        )
         taskModes.forEach { task ->
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -418,6 +398,11 @@ fun ObstacleInput(
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Text(
+            text = "Obstacles:",
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(end = 5.dp)
+        )
         DragTarget(
             dataToDrop = Obstacle(id = arenaUiState.nextObsID, facing = "N")
         ) {
@@ -442,10 +427,6 @@ fun ObstacleInput(
             if (obstacle != null) {
                 LaunchedEffect(key1 = obstacle) {
                     viewModel.removeObstacle(obstacleID = obstacle.id)
-//                    MessageService.sendSubObstacle(
-//                        bts = bluetoothService,
-//                        id = obstacle.id,
-//                    )
                 }
             }
             if (isInBound) {
