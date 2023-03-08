@@ -34,6 +34,7 @@ class GreedyHamiltonianPathPlanner(AbstractHamiltonianPathPlanner):
         unvisited = set(self.graph.nodes)
 
         # the start node is already visited
+        #start_node = self.starting_node
         current_node = self.starting_node
         unvisited.remove(current_node)
         path = [current_node]
@@ -47,6 +48,8 @@ class GreedyHamiltonianPathPlanner(AbstractHamiltonianPathPlanner):
             current_node = next_node
             unvisited.remove(current_node)
             path.append(current_node)
+        # path_length += self.graph[current_node][start_node]["weight"]
+        # path.append(start_node)
 
         return path, path_length
 
@@ -57,6 +60,7 @@ class ExhaustiveHamiltonianPathPlanner(AbstractHamiltonianPathPlanner):
 
     def find_path(self):
         num_nodes = len(self.graph.nodes)
+        #start_node=self.starting_node
         other_nodes = list(self.graph.adj[self.starting_node])
         shortest_length = np.infty
         shortest_path = ()

@@ -14,11 +14,6 @@ from mdpalgo.communication.message_parser import MessageParser, MessageType, Tas
 from mdpalgo.interface.panel import Panel
 from mdpalgo.map.grid import Grid
 from mdpalgo.robot.robot import Robot
-import mdpalgo.images
-from imagerec.helpers import get_path_to
-
-# for image recognition
-from imagerec.infer import infer
 
 # for saving the image
 from PIL import Image
@@ -82,9 +77,6 @@ class Simulator:
 
         # parser to parse messages from RPi
         self.parser = MessageParser()
-
-        # configure the image path
-        self.image_folder = get_path_to(mdpalgo.images)
 
         # count of 'no image result' exception
         self.no_image_result_count = 0
@@ -154,9 +146,10 @@ class Simulator:
         """Connect to RPi wifi server and start a thread to receive messages """
         self.comms = AlgoClient()
         self.comms.connect()
-        self.recv_thread = threading.Thread(target=self.receiving_process)
+        #self.recv_thread = threading.Thread(target=self.receiving_process)
         constants.RPI_CONNECTED = True
-        self.recv_thread.start()
+        self.receiving_process()
+        #self.recv_thread.start()
 
     def handle_worker_callbacks(self):
         """Check for callbacks from worker thread and handle them
@@ -167,6 +160,7 @@ class Simulator:
         callback = self.callback_queue.get(False)  # doesn't block
         if isinstance(callback, list):
             logging.info("Current callback: \n%s", callback)
+            logging.info("Logging 1: ", str(callback[1]))
             callback[0](callback[1])
         else:
             callback()
@@ -180,14 +174,17 @@ class Simulator:
 
         while constants.RPI_CONNECTED:
             try:
-                txt = self.comms.recv()
-                if (txt == None):
-                    continue
+                if self.comms.client_socket is not None:
+                    txt = self.comms.client_socket.recv(1024)
+                    print("Text: ", txt)
+                    if (txt == None):
+                        continue
 
-                message_type_and_data = self.parser.parse(txt)
+                message_type_and_data = self.parser.parse(txt.decode())
                 message_data = message_type_and_data["data"]
                 if message_type_and_data["type"] == MessageType.START_TASK:  # From Android
                     self.on_receive_start_task_message(message_data)
+                    return
 
                 elif message_type_and_data["type"] == MessageType.UPDATE_ROBOT_POSE:
                     self.on_receive_update_robot_pose(message_data)
@@ -203,28 +200,33 @@ class Simulator:
 
         if task == TaskType.TASK_EXPLORE:  # Week 8 Task
             # Reset first
-            self.callback_queue.put(self.reset_button_clicked)
-
+            #self.callback_queue.put(self.reset_button_clicked)
+            self.reset_button_clicked()
             # Set robot starting pos
             robot_params = message_data['robot']
             logging.info("Setting robot position: %s", robot_params)
             robot_x, robot_y, robot_dir = int(robot_params["x"]), int(robot_params["y"]), int(robot_params["dir"])
 
-            self.callback_queue.put([self.car.update_robot, [robot_dir, self.grid.grid_to_pixel((robot_x, robot_y))]])
-            self.callback_queue.put(self.car.redraw_car_refresh_screen)
+            #self.callback_queue.put([self.car.update_robot, [robot_dir, self.grid.grid_to_pixel((robot_x, robot_y))]])
+            #self.callback_queue.put(self.car.redraw_car_refresh_screen)
+            self.car.update_robot(robot_dir, self.grid.grid_to_pixel((robot_x, robot_y)))
+            self.car.redraw_car_refresh_screen()
 
             # Create obstacles given parameters
             logging.info("Creating obstacles...")
             for obstacle in message_data["obs"]:
                 logging.info("Obstacle: %s", obstacle)
                 id, grid_x, grid_y, dir = obstacle["id"], int(obstacle["x"]), int(obstacle["y"]), int(obstacle["dir"])
-                self.callback_queue.put([self.grid.create_obstacle, [grid_x, grid_y, dir]])
+                #self.callback_queue.put([self.grid.create_obstacle, [grid_x, grid_y, dir]])
+                self.grid.create_obstacle([id, grid_x, grid_y, dir])
 
             # Update grid, start explore
-            self.callback_queue.put(self.car.redraw_car_refresh_screen)
+            #self.callback_queue.put(self.car.redraw_car_refresh_screen)
+            self.car.redraw_car_refresh_screen()
 
             logging.info("[AND] Doing path calculation...")
-            self.callback_queue.put(self.start_button_clicked)
+            #self.callback_queue.put(self.start_button_clicked)
+            self.start_button_clicked()
 
         elif task == TaskType.TASK_PATH:  # Week 9 Task
             pass
@@ -234,72 +236,72 @@ class Simulator:
         status = message_data["status"]
         if status == "DONE":
             self.path_planner.update_num_move_completed(message_data["num_move"])
-            if self.path_planner.is_move_to_current_obstacle_done():
-                self.path_planner.request_photo_from_rpi()
+            # if self.path_planner.is_move_to_current_obstacle_done():
+            #     self.path_planner.request_photo_from_rpi()
         else:
             raise ValueError("Unimplemented response for updated robot pose")
 
-    def on_receive_image_taken_message(self, data_dict: dict):
-        image = data_dict["image"]
-        infer_result = infer(image)
-        try:
-            target_id = self.check_infer_result(infer_result)
+    # def on_receive_image_taken_message(self, data_dict: dict):
+    #     image = data_dict["image"]
+    #     infer_result = infer(image)
+    #     try:
+    #         target_id = self.check_infer_result(infer_result)
 
-            # reset exception count if there is an image result returned after retaking photo once
-            if self.no_image_result_count == 1:
-                self.no_image_result_count = 0
+    #         # reset exception count if there is an image result returned after retaking photo once
+    #         if self.no_image_result_count == 1:
+    #             self.no_image_result_count = 0
 
-        except Exception as e:
-            logging.exception(e)
-            self.no_image_result_count += 1
+    #     except Exception as e:
+    #         logging.exception(e)
+    #         self.no_image_result_count += 1
 
-            # if no image result for 2 times, return early to prevent request photo loop
-            if self.no_image_result_count == 2:
-                self.no_image_result_count = 0
-                self.path_planner.skip_current_target()
-                self.path_planner.send_to_rpi()
-                return
+    #         # if no image result for 2 times, return early to prevent request photo loop
+    #         if self.no_image_result_count == 2:
+    #             self.no_image_result_count = 0
+    #             self.path_planner.skip_current_target()
+    #             self.path_planner.send_to_rpi()
+    #             return
 
-            self.path_planner.request_photo_from_rpi() # take photo again if exception raised
-            return
+    #         self.path_planner.request_photo_from_rpi() # take photo again if exception raised
+    #         return
 
-        # get list of images
-        list_of_images = list(self.image_folder.glob("*.jpg"))
-        print("List of images:", list_of_images)
+    #     # get list of images
+    #     list_of_images = list(self.image_folder.glob("*.jpg"))
+    #     print("List of images:", list_of_images)
 
-        # set image name
-        if len(list_of_images) == 0:
-            image_name = "img_1"
-        else:
-            latest_image = max(list_of_images, key=os.path.getctime)
-            print("Latest:", latest_image)
-            previous_image_name = latest_image.stem
-            print("Previous image name:", previous_image_name)
-            image_number = int(previous_image_name.split("_")[-1]) + 1
-            image_name = "img_" + str(image_number)
+    #     # set image name
+    #     if len(list_of_images) == 0:
+    #         image_name = "img_1"
+    #     else:
+    #         latest_image = max(list_of_images, key=os.path.getctime)
+    #         print("Latest:", latest_image)
+    #         previous_image_name = latest_image.stem
+    #         print("Previous image name:", previous_image_name)
+    #         image_number = int(previous_image_name.split("_")[-1]) + 1
+    #         image_name = "img_" + str(image_number)
 
-        print("Image label:", target_id)
-        print("Image name:", image_name)
-        image.save(self.image_folder.joinpath(f"{image_name}.jpg"))
-        image_result_string = self.path_planner.get_image_result_string(target_id)
-        if constants.RPI_CONNECTED:
-            # send image result string to rpi
-            self.comms.send(image_result_string)
-            self.path_planner.send_to_rpi()
+    #     print("Image label:", target_id)
+    #     print("Image name:", image_name)
+    #     image.save(self.image_folder.joinpath(f"{image_name}.jpg"))
+    #     image_result_string = self.path_planner.get_image_result_string(target_id)
+    #     if constants.RPI_CONNECTED:
+    #         # send image result string to rpi
+    #         self.comms.send(image_result_string)
+    #         self.path_planner.send_to_rpi()
 
-    def check_infer_result(self, infer_result):
-        if infer_result == "Nothing detected":
-            raise Exception("Nothing detected")
+    # def check_infer_result(self, infer_result):
+    #     if infer_result == "Nothing detected":
+    #         raise Exception("Nothing detected")
 
-        # remove all elements in infer_result that are "Bullseye"
-        result = [elem for elem in infer_result if elem != "Bullseye"]
+    #     # remove all elements in infer_result that are "Bullseye"
+    #     result = [elem for elem in infer_result if elem != "Bullseye"]
 
-        # if all elements in list are "Bullseye", raise exception
-        if len(result) == 0:
-            raise Exception("Only Bullseye")
-        # get first element that is not "Bullseye"
-        else:
-            return result[0]
+    #     # if all elements in list are "Bullseye", raise exception
+    #     if len(result) == 0:
+    #         raise Exception("Only Bullseye")
+    #     # get first element that is not "Bullseye"
+    #     else:
+    #         return result[0]
 
     def reprint_screen_and_buttons(self):
         self.screen.fill(constants.GRAY)
@@ -369,11 +371,14 @@ class Simulator:
 
             # Path finding
             self.path_planner = PathPlan(self, self.grid, self.car, optimized_fastest_route)
+            logging.debug("Fastest Route: ", optimized_fastest_route)
             self.path_planner.start_robot()
+            
 
     def predict_on_finish(self):
         # call predict function after finishing task
-        os.system(f'python -m imagerec.predict \"{self.image_folder}\"')
+        # os.system(f'python -m imagerec.predict \"{self.image_folder}\"')
+        pass
 
     def reset_button_clicked(self):
         self.grid.reset_data()
@@ -393,14 +398,14 @@ if __name__ == "__main__":
     thread = threading.Thread(target=lambda: x.on_receive_start_task_message(data_dict))
     thread.start()
 
-    # Test the receiving image function
-    import mdpalgo.tests.images
-    image_folder = get_path_to(mdpalgo.tests.images)
-    image_path = image_folder.joinpath("img_1.jpg")
-    with Image.open(image_path) as image:
-        image.load()
-    data_dict = {"image": image}
-    thread = threading.Thread(target=lambda: x.on_receive_image_taken_message(data_dict))
+    # # Test the receiving image function
+    # import mdpalgo.tests.images
+    # image_folder = get_path_to(mdpalgo.tests.images)
+    # image_path = image_folder.joinpath("img_1.jpg")
+    # with Image.open(image_path) as image:
+    #     image.load()
+    # data_dict = {"image": image}
+    # thread = threading.Thread(target=lambda: x.on_receive_image_taken_message(data_dict))
 
     thread.start()
     x.run()

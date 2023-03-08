@@ -21,11 +21,11 @@ ROBOT_H = 30
 ROBOT_STARTING_X = 1
 ROBOT_STARTING_Y = 1
 ROBOT_STARTING_ANGLE = NORTH
-TURNING_RADIUS = 3
+TURNING_RADIUS = 2
 
 # this is the buffer from the boundary of the grid
 # negative values mean the cell representing the robot can move outside of the grid
-BOUNDARY_BUFFER = -1
+BOUNDARY_BUFFER = 1
 
 FPS = 60
 
@@ -36,7 +36,10 @@ RPI_CONNECTED = False
 HEADLESS = False
 
 # WIFI server IP address
-RPI_IP = "192.168.15.1" # real RPi server
-TEST_IP = "127.0.0.1" # Use this for easier testing RPi integration without RPi
-WIFI_IP = RPI_IP
-PORT = 12345
+RPI_IP = "10.91.234.84" # real RPi server
+RPI_IP_WIFI = "192.168.15.1"
+RPI_IP_WIFI_NEW = "192.168.15.69"
+MY_IP = "192.168.1.8"
+TEST_IP = "10.91.96.223" # Use this for easier testing RPi integration without RPi
+WIFI_IP = TEST_IP
+PORT = 54321

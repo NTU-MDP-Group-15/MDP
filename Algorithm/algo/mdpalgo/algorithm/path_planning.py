@@ -20,6 +20,7 @@ class PathPlan(object):
         self.robot_pose: Pose = self.robot.get_robot_pose()
         self.obstacle_cell = None
         self.collection_of_movements = [] # collection of RobotMovement
+        self.movement_string = []
         self.collection_of_robot_pos = []
         self.path_according_to_movements = [] # trail of cells
         self.all_movements_dict = {}
@@ -31,6 +32,8 @@ class PathPlan(object):
         self.num_move_completed_rpi = 0 # completed num moves by RPi to self.obstacle_key
         self.total_num_move_required_rpi = 0 # total required num moves by RPi to self.obstacle_key
         self.auto_planner = AutoPlanner()
+        self.full_path=[]
+        self.robot_pos_string = []
 
     def start_robot(self):
         # Remove robot starting position from fastest_route
@@ -43,7 +46,7 @@ class PathPlan(object):
             target = self.fastest_route.pop(0)
             self.plan_full_path_to(target)
 
-            if count_of_obs == 1:
+            if count_of_obs >= 1:
                 if constants.RPI_CONNECTED:
                     self.send_to_rpi()
 
@@ -74,6 +77,13 @@ class PathPlan(object):
         # Else, execute gray route
         self.execute_auto_search_result()
 
+    def get_target_id(self, target:list):
+            if target[3].id != None:
+                return target[3].id
+            else:
+                return ''
+    
+
     def get_target_pose_obstacle_cell_from(self, target: list):
         """Get the target pose and obstacle cell from a list of [x, y, dir, Cell]
         """
@@ -90,7 +100,7 @@ class PathPlan(object):
         obstacle_coords = [
             (cell.x_coordinate, cell.y_coordinate) for cell in self.grid.obstacle_cells.values()
         ]
-        self.collection_of_movements, self.path_according_to_movements = self.auto_planner.get_movements_and_path_to_goal(
+        self.collection_of_movements, self.path_according_to_movements, self.movement_string = self.auto_planner.get_movements_and_path_to_goal(
             maze, cost, start, end, obstacle_coords)
 
     def execute_auto_search_result(self):
@@ -102,10 +112,17 @@ class PathPlan(object):
             self.draw_path_of_move_on_grid(path)
 
         self.collection_of_robot_pos.append(self.get_robot_pos())
-        self.grid.set_obstacle_as_visited(self.obstacle_cell)
+        try:
+            self.grid.set_obstacle_as_visited(self.obstacle_cell)
+        except Exception as e:
+             logging.exception(e)
+             pass
         self.robot.redraw_car_refresh_screen()
-
-        self.save_search_info()
+        try:
+            self.save_search_info()
+        except Exception as e:
+             logging.exception(e)
+             pass
 
     def draw_path_of_move_on_grid(self, cell_coords):
         for x, y in cell_coords:
@@ -117,12 +134,14 @@ class PathPlan(object):
     def restart_robot(self):
         if len(self.skipped_obstacles) == 0:
             print("No skipped obstacles to run")
+            self.send_to_rpi()
             return
 
         print("Restart robot to go to skipped obstacles")
         while len(self.skipped_obstacles) != 0:
             target = self.skipped_obstacles.pop(0)
             self.plan_full_path_to(target)
+            self.send_to_rpi()
 
     def set_path_status_to_xy_cell(self, x:int , y: int):
         if self.grid.is_xy_coords_within_grid(x, y):
@@ -130,6 +149,9 @@ class PathPlan(object):
 
     def reset_collection_of_movements(self):
         self.collection_of_movements.clear()
+    
+    def reset_movement_string(self):
+        self.movement_string.clear()
 
     def reset_path_according_to_movements(self):
         self.path_according_to_movements.clear()
@@ -187,7 +209,7 @@ class PathPlan(object):
     def send_to_rpi(self):
         if not self.obstacle_list_rpi:
             # Call predict function on finish
-            self.simulator.predict_on_finish()
+            #self.simulator.predict_on_finish()
             self.send_to_rpi_finish_task()
             return
 
@@ -195,8 +217,15 @@ class PathPlan(object):
         self.reset_num_move_completed_rpi()
         self.set_total_num_move_from_movement_message(self.all_movements_dict[self.obstacle_key])
         print("Remaining obstacles: ", self.obstacle_list_rpi)
-        self.simulator.comms.send(self.all_robot_pos_dict[self.obstacle_key])
-        self.simulator.comms.send(self.all_movements_dict[self.obstacle_key])
+        #self.simulator.comms.send(self.all_robot_pos_dict[self.obstacle_key])
+        #self.simulator.comms.send(self.all_movements_dict[self.obstacle_key])
+        id=[]
+        id.append(str(self.get_target_id(self.target)))
+        self.movement_string=id+self.movement_string
+        self.full_path.append(self.movement_string)
+        self.robot_pos_string.append(",".join(self.robot.robot_pos))
+        self.robot.robot_pos.clear()
+        
 
     def set_total_num_move_from_movement_message(self, message: str):
         """Extract the number of moves from the movement message
@@ -209,7 +238,12 @@ class PathPlan(object):
         self.total_num_move_required_rpi = len(message.split("/")[-1].split(","))
 
     def send_to_rpi_finish_task(self):
-        self.simulator.comms.send("FINISH/EXPLORE/")
+        full_path_string = "STM/" + str(self.full_path)
+        self.simulator.comms.send(full_path_string)
+        
+        full_robot_pos_string = "AND/[C10] " + ",".join(self.robot_pos_string)
+        self.simulator.comms.send(full_robot_pos_string) #Send full list of robot coordinates for android to update
+        #self.simulator.comms.send("FINISH/EXPLORE/")
 
     def reset_num_move_completed_rpi(self):
         self.num_move_completed_rpi = 0

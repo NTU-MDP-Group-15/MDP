@@ -85,6 +85,9 @@ class Grid(object):
     def get_obstacle_cells(self):
         return self.obstacle_cells
 
+    def get_obstacle_coords(self):
+        return [[obstacle_cell.get_xcoord(), obstacle_cell.get_ycoord()] for obstacle_cell in self.obstacle_cells.values()]
+
     def get_target_locations(self):
         target_locations = []
         for obstacle_cell in self.obstacle_cells.values():
@@ -111,10 +114,10 @@ class Grid(object):
         return target_locations
 
     def create_obstacle(self, arglist):
-        grid_x, grid_y, dir = arglist[0], arglist[1], arglist[2]
+        id, grid_x, grid_y, dir = arglist[0], arglist[1], arglist[2],arglist[3]
         # Set that location to one
         cell = self.get_cell_by_xycoords(grid_x, grid_y)
-        cell.create_obstacle(dir)
+        cell.create_obstacle(dir,id)
 
         self.add_cell_to_obstacle_list(cell)
         self.set_obstacle_boundary_cells_around(cell)
@@ -142,7 +145,6 @@ class Grid(object):
     def grid_clicked(self, pixel_x, pixel_y):
         # Change the x/y screen coordinates to grid coordinates
         grid_x, grid_y = self.pixel_to_grid((pixel_x, pixel_y))
-
         selected_cell = self.get_cell_by_xycoords(grid_x, grid_y)
         previous_status = selected_cell.get_cell_status()
         selected_cell.cell_clicked()
@@ -166,17 +168,15 @@ class Grid(object):
 
         else:
             print("Clicked on a cell that cannot be chosen as obstacle cell.")
-
+        
     def get_boundary_cells_coords(self, cell: Cell):
         """Return a list of coordinates [x_coord, y_coord] of the cells
         surrounding a given cell, within a 2 cell radius (1 for diagonal)."""
         x, y = cell.get_xcoord(), cell.get_ycoord()
         boundary_cells = [
-                            [x - 1, y + 2], [x, y + 2], [x + 1, y + 2],
-            [x - 2, y + 1], [x - 1, y + 1], [x, y + 1], [x + 1, y + 1], [x + 2, y + 1],
-            [x - 2, y    ], [x - 1, y    ],             [x + 1, y    ], [x + 2, y    ],
-            [x - 2, y - 1], [x - 1, y - 1], [x, y - 1], [x + 1, y - 1], [x + 2, y - 1],
-                            [x - 1, y - 2], [x, y - 2], [x + 1, y - 2],
+            [x - 1, y + 1], [x, y + 1], [x + 1, y + 1],
+            [x - 1, y    ],             [x + 1, y    ],
+            [x - 1, y - 1], [x, y - 1], [x + 1, y - 1]
         ]
         return boundary_cells
 

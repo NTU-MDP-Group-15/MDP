@@ -16,7 +16,7 @@ class Algorithm:
     def __init__(self):
         print("[Algo] Initialising Algorithm Process")
 
-        self.host = constants.TEST_IP
+        self.host = constants.RPI_IP
         self.port = constants.PORT
 
         self.address = None
