@@ -141,6 +141,14 @@ class ArenaViewModel : ViewModel() {
         return facing
     }
 
+    private fun validCoordinates(coordinate: Int):Boolean {
+        val list = (1..18).toList()
+        if (list.contains(coordinate)) {
+            return true
+        }
+        return false
+    }
+
     // Set Robot Position and Facing
     fun setRobotPosFacing() {
         var count=0
@@ -148,12 +156,17 @@ class ArenaViewModel : ViewModel() {
             count = _uiState.value.coordinateCounter
         }
         else {
-            count = _uiState.value.storedCoordinates.size-3
+            return
         }
 
         val x = _uiState.value.storedCoordinates[count].toInt()
         val y = _uiState.value.storedCoordinates[count + 1].toInt()
         val facing = toFacing(_uiState.value.storedCoordinates[count + 2])
+
+        if (!validCoordinates(x) || !validCoordinates(y) || facing == "") {
+            _uiState.update { currentState -> currentState.copy(coordinateCounter = count+3)}
+            return
+        }
 
         _uiState.update { currentState ->
             currentState.copy(
