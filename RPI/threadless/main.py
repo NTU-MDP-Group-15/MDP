@@ -1,6 +1,6 @@
 """
 Filename: main.py
-Version: v1.1
+Version: v3.1
 
 Starts all relevant threads required for MDP
 
@@ -50,10 +50,11 @@ import modules
 
 class MDPPi:
     def __init__(self):
-        self.stm_int = modules.STMInterface()
-        self.bt_int = modules.BTServerInterface(name="MDP-Pi BT Server")          # thread
-        self.algo_int = modules.AlgoServerInterface(name="MDP-Pi Algo Server")    # thread
-        self.im_int = modules.ImageRecInterface()
+        self.stm_int = modules.STMInterface(rpi=self)
+        self.bt_int = modules.BTServerInterface(rpi=self)          
+        self.algo_int = modules.AlgoServerInterface(rpi=self)
+        self.im_int = modules.ImageRecInterface(rpi=self)
+        
         self.dh = modules.DataHandler(stm_int=self.stm_int, 
                                       im_int=self.im_int,
                                        algo_int=self.algo_int,
@@ -61,26 +62,30 @@ class MDPPi:
                                       )
         
     def __call__(self):
-        self.stm_int()          # Connect stm first
-        #self.im_int()
-        self.algo_int()
-        self.bt_int()
+        self.connect()
+       
         print("[PI/INFO] All devices connected successfully")
-        
-        self.dh()
         print("[PI/INFO] MainPI RUNNING")
         
         # Keep main thread alive to capture KeyboardInterrupt
         while True:
             try:
-                time.sleep(0.5)
+                time.sleep(0.1)
             except KeyboardInterrupt:
                 print("[PI/INFO] Killing all processes")
                 self.kill_all_proc()
                 break
         print("[PI/INFO] Exiting PI")
     
+    def connect(self):
+        print("[PI/INFO] Connecting devices")
+        self.stm_int()          # Connect stm first
+        #self.im_int()
+        #self.algo_int()
+        #self.bt_int()        
+    
     def kill_all_proc(self) -> None:
+        
         self.stm_int.disconnect()
         self.im_int.disconnect()
         self.algo_int.disconnect()

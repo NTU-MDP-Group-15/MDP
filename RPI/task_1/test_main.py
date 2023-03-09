@@ -31,7 +31,7 @@ btInterface.py
 260223 - Updated to taskv1
        - Added logic between ANDROID <-> RPI, RPI <-> ALGO
 270223 - Moved thread_proc to dataHandler.py
-
+060323 - Converted STM to process
 
 Order of connection STM -> IMGREC -> ALGO -> BT
 
@@ -45,8 +45,14 @@ Step 4: RPI sends instructions to STM
 Repeat step 4.
 
 """
-import time
+import re
 import modules 
+import time
+import threading
+
+from modules.helper import STM_IN, ANDROID_IN, ALGO_IN, IMGREC_IN, \
+                           STM_OUT, ANDROID_OUT, ALGO_OUT, IMGREC_OUT, \
+                           TAKE_PIC, MOVEMENT_DICT
 
 class MDPPi:
     def __init__(self):
@@ -56,42 +62,36 @@ class MDPPi:
         self.im_int = modules.ImageRecInterface()
         self.dh = modules.DataHandler(stm_int=self.stm_int, 
                                       im_int=self.im_int,
-                                       algo_int=self.algo_int,
-                                       bt_int=self.bt_int
+                                    #   algo_int=self.algo_int,
+                                    #   bt_int=self.bt_int
                                       )
-        
+                                      
     def __call__(self):
         self.stm_int()          # Connect stm first
         #self.im_int()
-        self.algo_int()
-        self.bt_int()
+        #self.algo_int()
+        #self.bt_int()
+        
         print("[PI/INFO] All devices connected successfully")
-        
-        self.dh()
         print("[PI/INFO] MainPI RUNNING")
+        #self.dh()
+
+        input("> ")
+        s1 = "[['1', 'B020', 'FR090', 'B010', 'FL090'], ['2', 'B050', 'FR090', 'F020'], ['3', 'B010', 'FR090', 'B020', 'BL090', 'BR090', 'B010', 'FR090'], ['4', 'F010'], ['5', 'B020', 'FL090', 'F030', 'FR090', 'F010', 'BL090', 'F010']]"
         
-        # Keep main thread alive to capture KeyboardInterrupt
-        while True:
-            try:
-                time.sleep(0.5)
-            except KeyboardInterrupt:
-                print("[PI/INFO] Killing all processes")
-                self.kill_all_proc()
-                break
-        print("[PI/INFO] Exiting PI")
-    
-    def kill_all_proc(self) -> None:
+        #s2 = "[['01', 'F010'], ['02', 'B030', 'FR090', 'F010', 'BL090', 'F010']]"
+        
+        buffered_instr = list()
+        buffer_array = eval(s1)
+        for ar in buffer_array:
+            STM_OUT.put(self.dh.algo_to_stm(ar))
+        
+    def kill_all_proc(self):
         self.stm_int.disconnect()
         self.im_int.disconnect()
         self.algo_int.disconnect()
         self.bt_int.disconnect()
         self.dh.kill_thread()
-                
-        # self.stm_int.kill_flag = True
-        # self.im_int.kill_flag = True
-        # self.algo_int.kill_flag = True
-        # self.bt_int.kill_flag = True
-        # self.dh.kill_flag = True
         
 if __name__ == '__main__':
     pi = MDPPi()

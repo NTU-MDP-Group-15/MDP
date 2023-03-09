@@ -21,23 +21,29 @@ GENERAL_TIMEOUT = 0
 SERVER_EXIT_FLAG = False
 BUFFER_SIZE = 8192
 
+# class AlgoServerInterface(threading.Thread):
 class AlgoServerInterface:
-    def __init__(self, name, protocol=PROTOCOL,
+    def __init__(self, rpi=None, protocol=PROTOCOL,
                  rpi_ip=SERVER_IP, algo_port= ALGO_PORT,
                  max_client=MAX_CLIENT
                  ):
         # super().__init__()
-        self.name = name
+        self.rpi = rpi
         self.protocol = protocol
         self.rpi_ip = rpi_ip
         self.algo_port = algo_port
         self.max_client = max_client
+        self.s_sock = None
         self.c_sock = None
         self.c_addr = None        
 
         # Flags to control behaviour
         self.lock = threading.Lock()
         self.kill_flag = False
+        
+    def run(self):
+        self.connect()
+
 
     def __call__(self):
         print(f"[ALGO/INFO] Starting {self.name}")
@@ -54,26 +60,29 @@ class AlgoServerInterface:
             self.s_sock = socket.socket(socket.AF_INET, self.protocol)
             self.s_sock.bind((self.rpi_ip, self.algo_port))
             self.s_sock.listen(self.max_client)
-
-            self.s_sock.settimeout(SERVER_SOCKET_TIMEOUT)
-            print(f"[ALGO_S/INFO] Listening on {self.rpi_ip}:{self.algo_port}")
-        except:
-            self.kill_flag = True
+            
+            print(f"[ALGO/INFO] Listening on {self.rpi_ip}:{self.algo_port}")
+        except Exception as e:
+            print(e)
+        
         while True:
             try:
                 self.c_sock, self.c_addr = self.s_sock.accept()
             except socket.timeout:
                 pass
             except KeyboardInterrupt:
-                print("[ALGO_S/INFO] Keyboard interrupt received...")
+                print("[ALGO/INFO] Keyboard interrupt received...")
                 break
             else:
-                print(f"[ALGO_S/INFO] Connection from {self.c_addr}")
+                print(f"[ALGO/INFO] Connection from {self.c_addr}")
                 break
             
     def disconnect(self):
         print(f"[ALGO/INFO] Setting kill_flag to True")
         self.kill_flag = True
+        
+        self.listener_thread.join()
+        self.sender_thread.join()
         
         if self.c_sock:
             self.c_sock.close()

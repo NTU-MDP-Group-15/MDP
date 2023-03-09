@@ -35,7 +35,7 @@ ZMQ_PORT = 5555
 MODEL_PATH = os.path.join(".", "bestv5.pt")     # ./bestv5.pt .\bestv5.pt
 YOLO_PATH = os.path.join(".","YOLOv5")
 #YOLO_PATH = os.path.join(".","yolov5_1")
-NO_OF_PIC = 5
+NO_OF_PIC = 1
 
 assets_dir = os.path.join('.','assets')
 
