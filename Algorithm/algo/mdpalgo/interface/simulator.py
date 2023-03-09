@@ -193,7 +193,7 @@ class Simulator:
                     self.on_receive_image_taken_message(message_data)
 
             except (IndexError, ValueError) as e:
-                print("Invalid command: " + txt)
+                print("Invalid command: " + txt.decode())
 
     def on_receive_start_task_message(self, message_data: dict):
         task = message_data["task"]
