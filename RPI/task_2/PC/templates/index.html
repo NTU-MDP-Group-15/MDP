@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tiled Image View</title>
+    <style>
+      .tile {
+        float: left;
+        margin: 5px;
+        padding: 5px;
+        border: 1px solid #ccc;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Tiled Image View</h1>
+    {% for image_name in image_names %}
+      <div class="tile">
+        <img src="{{ url_for('static',  filename=image_name) }}" width="300" height="300">
+      </div>
+    {% endfor %}
+  </body>
+</html>
