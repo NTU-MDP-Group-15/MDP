@@ -20,10 +20,9 @@ from .config import MOVEMENT_DICT, OBSTACLE_ID
 PATTERN = re.compile(r"([a-zA-Z]+)(\d+)")
 
 class DataHandler:
-    def __init__(self, stm_int = None, im_int = None, algo_int = None, bt_int = None):
+    def __init__(self, stm_int = None, im_int = None, bt_int = None):
         self.stm_int = stm_int
         self.im_int = im_int
-        self.algo_int = algo_int
         self.bt_int = bt_int
 
         self.buffered_instr = list()
@@ -41,11 +40,7 @@ class DataHandler:
         # Step 2: Send to Algo
         self.algo_int.send(and_data)
         
-        # Step 3: Receive from Algo
-        algo_data = self.algo_int.receive()
-        
-        #algo_data = "STM/[['01', 'FR090', 'B010', 'FL090', 'F020', 'BR090', 'F010'], ['06', 'F020', 'BR090', 'F030', 'FL090'], ['05', 'F010', 'BL090', 'B020', 'BL090', 'BR090', 'F010'], ['04', 'B010', 'FR090', 'B040', 'FR090'], ['03', 'B050', 'FL090', 'B010', 'FR090', 'FL090'], ['02', 'B010', 'FL090', 'F050', 'BR090', 'F010']]AND/[C10] 1,1,0,4,4,-90,3,4,-90,6,7,0,6,8,0,6,9,0,9,6,90,8,6,90,7,6,90,6,6,90,9,9,180,9,8,180,9,7,180,9,6,180,12,3,-90,13,3,-90,10,6,180,10,7,180,10,8,180,13,11,90,16,14,180,16,13,180,16,14,180,13,11,90,14,11,90,15,11,90,16,11,90,17,11,90,14,14,0,14,13,0,14,12,0,14,11,0,14,10,0,14,9,0,11,12,90,12,12,90,9,15,0,6,18,90,7,18,90,4,15,180,4,14,180,4,13,180,4,12,180,4,11,180,4,10,180,1,13,-90,2,13,-90"
-        
+        # Step 3: Receive from Algo                
         stm_data, and_data = algo_data.split('AND/')
         stm_data = stm_data.split("STM/")[-1]
         
