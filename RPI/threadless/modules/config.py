@@ -1,6 +1,6 @@
 '''
-Filename: helper.py
-Version: v1.1
+Filename: config.py
+Version: v1.2
 
 Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
@@ -26,9 +26,6 @@ Class for setting up connection sockets for algo
 '''
 import os
 import queue
-# import multiprocessing
-# from multiprocessing import Queue
-# import pickle
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(os.path.split(CUR_DIR)[0], "photos")
@@ -41,15 +38,18 @@ ANDROID_IN, ANDROID_OUT = queue.Queue(), queue.Queue()
 ALGO_IN, ALGO_OUT = queue.Queue(), queue.Queue() 
 IMGREC_IN, IMGREC_OUT = queue.Queue(), queue.Queue() 
 
-SERVER_IP = "192.168.15.1"
+OBSTACLE_ID = queue.Queue()
+
+RPI_IP = "192.168.15.1"
+ZMQ_IP = "192.168.15.69"
 ALGO_PORT = 12345
 STM_PORT = 12346
 BT_PORT = 12347
 IMGREC_PORT = 12348
+ZMQ_PORT = 5555
 
 TAKE_PIC = "PIC"
-NO_OF_PIC = 5
-
+NO_OF_PIC = 6
 
 MOVEMENT_DICT = {
     "F": "01",

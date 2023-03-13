@@ -50,53 +50,39 @@ import modules
 
 class MDPPi:
     def __init__(self):
-        self.stm_int = modules.STMInterface(rpi=self)
-        self.bt_int = modules.BTServerInterface(rpi=self)          
-        self.algo_int = modules.AlgoServerInterface(rpi=self)
-        self.im_int = modules.ImageRecInterface(rpi=self)
-        
-        self.dh = modules.DataHandler(stm_int=self.stm_int, 
-                                      im_int=self.im_int,
-                                       algo_int=self.algo_int,
-                                       bt_int=self.bt_int
-                                      )
-        
+        self.stm_int = modules.STMInterface()
+        self.bt_int = modules.BTServerInterface()          
+        self.algo_int = modules.AlgoServerInterface()
+        self.im_int = modules.ImageRecInterface(no_of_pic=6)
+        self.dh = modules.DataHandler(stm_int=self.stm_int,
+                                      bt_int=self.bt_int,
+                                      algo_int=self.algo_int,
+                                      im_int=self.im_int
+                                     )
     def __call__(self):
-        self.connect()
-       
-        print("[PI/INFO] All devices connected successfully")
-        print("[PI/INFO] MainPI RUNNING")
-        
-        # Keep main thread alive to capture KeyboardInterrupt
-        while True:
-            try:
-                time.sleep(0.1)
-            except KeyboardInterrupt:
-                print("[PI/INFO] Killing all processes")
-                self.kill_all_proc()
-                break
-        print("[PI/INFO] Exiting PI")
-    
-    def connect(self):
+        if self.connect():
+            self.im_int.start_thread()
+            print("[PI/INFO] All devices connected successfully")
+            self.dh()
+
+            print("[PI/INFO] MainPI RUNNING")
+        print("[PI/INFO] Exiting MainPi")
+        self.clean_close()
+            
+    def connect(self) -> bool:
         print("[PI/INFO] Connecting devices")
-        self.stm_int()          # Connect stm first
-        #self.im_int()
-        #self.algo_int()
-        #self.bt_int()        
-    
-    def kill_all_proc(self) -> None:
+        stm_con = self.stm_int.connect()          # Connect stm first
+        im_con = self.im_int.connect()
+        algo_con = self.algo_int.connect()
+        bt_con = self.bt_int.connect()
+        return (stm_con and im_con and algo_con and bt_con)
+        #return True
         
+    def clean_close(self) -> None:
         self.stm_int.disconnect()
         self.im_int.disconnect()
         self.algo_int.disconnect()
         self.bt_int.disconnect()
-        self.dh.kill_thread()
-                
-        # self.stm_int.kill_flag = True
-        # self.im_int.kill_flag = True
-        # self.algo_int.kill_flag = True
-        # self.bt_int.kill_flag = True
-        # self.dh.kill_flag = True
         
 if __name__ == '__main__':
     pi = MDPPi()

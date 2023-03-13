@@ -20,15 +20,12 @@ import socket
 import imagezmq
 import traceback
 import threading
-from .helper import IMGREC_IN, IMGREC_PORT
+
+from .config import RPI_IP, ZMQ_IP, IMGREC_PORT, ZMQ_PORT, NO_OF_PIC, OBSTACLE_ID
 
 HEIGHT = 480
 WIDTH = 640
-RPI_IP = "192.168.15.1"
-ZMQ_IP = "192.168.15.69"
-ZMQ_PORT = 5555
 
-NO_OF_PIC = 5
 IMG_FORMAT = "jpg"
 
 class ImageRecInterface:
@@ -47,21 +44,21 @@ class ImageRecInterface:
         self.img_format = img_format
         self.capture_index = capture_index
         
-        # Flags to control behaviours
+        self.s_sock = None
+        self.c_sock = None
+        self.rpi_name = socket.gethostname()
+        
+        self.picam = self.get_video_capture()
         self.lock = threading.Lock()
         self.kill_flag = False
         self.send_image_flag = False
-
-        # self.idx = self.get_file_count()
-        self.rpi_name = socket.gethostname()
-        
-    def __call__(self):
-        self.connect()
-        self.picam = self.get_video_capture()
-        self.img_sender = self.get_image_sender()
-        self.listen_thread = threading.Thread(target=self.listener).start()
-        self.send_thread = threading.Thread(target=self.send_video).start()
-
+    
+    def start_thread(self):
+        sv_thread = threading.Thread(target=self.send_video)
+        sv_thread.start()
+        #recv_thread = threading.Thread(target=self.receive)
+        #recv_thread.start()
+    
     def get_video_capture(self) -> cv2.VideoCapture:
         cap = cv2.VideoCapture(self.capture_index)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
@@ -76,56 +73,58 @@ class ImageRecInterface:
         # imagezmq.ImageSender(connect_to=self.zmq_address, REQ_REP=False)
         return imagezmq.ImageSender(connect_to=self.zmq_address)
     
-    # def get_file_count(self) -> int:
-    #     _, _, files = next(os.walk(IMG_DIR))
-    #     return len(files)
-    
-    def connect(self) -> None:
-        print("[IMGREC/INFO] Setting server socket")
-        self.s_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s_sock.bind((self.rpi_ip, self.imgrec_port))
-        self.s_sock.listen(1)
-        print("[IMGREC/INFO] Waiting for connection")
-        while True:
-            try:
-                self.c_sock, self.c_addr = self.s_sock.accept()
-            except socket.timeout:
-                pass
-            except KeyboardInterrupt:
-                print("[IMGREC/INFO] Received KeyboardInterrupt")
-                self.kill_flag = True
-                break
-            else:
-                print(f"[IMGREC/INFO] Connection from {self.c_addr}")
-                break
-        self.s_sock.close()
+    def connect(self) -> bool:
+        try:
+            self.s_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.s_sock.bind((self.rpi_ip, self.imgrec_port))
+            self.s_sock.listen(1)
+            print("[IMGREC/INFO] Waiting for connection")
+        except Exception as e:
+            print(e)
+        else:
+            while True:
+                try:
+                    self.c_sock, self.c_addr = self.s_sock.accept()
+                except socket.timeout:
+                    pass
+                except KeyboardInterrupt:
+                    print("[IMGREC/INFO] Received KeyboardInterrupt")
+                    break
+                else:
+                    print(f"[IMGREC/INFO] Connection from {self.c_addr}")
+                    self.img_sender = self.get_image_sender()
+                    return True
+        return False
     
     def disconnect(self) -> None:
-        print("[IMGREC/INFO] Setting kill_flag to True")
         self.kill_flag = True
-        
-        #self.listen_thread.join()
-        #self.send_thread.join()
-        
+        if self.s_sock: 
+            self.s_sock.close()
         if self.c_sock:
             self.c_sock.close()
-        
         if self.picam.isOpened():
             self.picam.release()
-
-    def take_picture(self, name="img{idx}.{img_format}"):
-        # img_name = name.format(idx=self.idx, img_format=self.img_format)
-        for _ in range(self.no_of_pic):
-            ret, frame = self.picam.read()
-            if ret == True:
-                self.img_sender.send_image(self.rpi_name, frame)    
-                print(f"[IMGREC/INFO] Sending frames {_}")
-
+            
+    def receive(self) -> str:
+        while True:
+            try:
+                rcv_data = self.c_sock.recv(1024)
+                if rcv_data:
+                    rcv_data = rcv_data.decode()
+                    print(f"[IMGREC/INFO] IMGREC received {rcv_data}")
+                    break
+            except KeyboardInterrupt:
+                break
+            except:
+                traceback.print_exc()
+        return rcv_data
+        
     def send_video(self) -> "workerThread":
         print("[IMGREC_VID/INFO] Starting video thread")
         while not self.kill_flag:
             _, _ = self.picam.read()
             if self.send_image_flag:
+                print(self.no_of_pic)
                 for _ in range(self.no_of_pic):
                     ret, frame = self.picam.read()
                     if ret == True:
@@ -140,19 +139,20 @@ class ImageRecInterface:
                 self.send_image_flag = False
         print("[IMGREC_VID/INFO] Exiting video thread... Releasing cam")
         self.picam.release()
-        
-    def listener(self) -> "workerThread":
-        disconnect_flag = False
-        
-        print("[IMGREC_LISTENER/INFO] Starting listener thread")
-        while not self.kill_flag:
-            try:
-                rcv_data = self.c_sock.recv(1024).decode()
-                if rcv_data:
-                    print(f"[IMGREC_LISTENER/INFO] IMGREC received {rcv_data}")
-                    IMGREC_IN.put(rcv_data)
-            except:
-                print("[IMGREC_LISTENER/INFO] EXCEPTION")
-                traceback.print_exc()
-                disconnect_flag = True
-        print("[IMGREC_LISTENER/INFO] Exiting listener thread")
+    
+    def take_send_picture(self) -> None:
+        picam = self.get_video_capture()
+        if picam:
+            for _ in range(self.no_of_pic):
+                ret, frame = picam.read()
+                if ret == True:
+                    print("[IMGREC/INFO] Sending frame")
+                    self.img_sender.send_image(self.rpi_name, frame)
+
+                # Break the loop
+                else: 
+                    print("[IMGREC/INFO] ret = False")
+                    break
+        else:
+            print("[IMGREC/INFO] ERROR WITH PICAM")
+        picam.release()
