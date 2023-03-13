@@ -1,95 +1,86 @@
 '''
 Filename: algoInterface.py
-Version: 0.1
+Version: v1.2
 
 Class for setting up connection sockets for algo
 ! Updates (DDMMYY)
+270223 - Removed threading
+         Added listener & sender threads
+         
 
 '''
 import socket 
-import threading
+from .config import RPI_IP, ALGO_PORT
 
 PROTOCOL = socket.SOCK_STREAM   # socket.SOCK_DGRAM
-SERVER_IP = "192.168.15.1"
-SERVER_PORT = 12345
 MAX_CLIENT = 5
 SERVER_SOCKET_TIMEOUT = 0.1
-GENERAL_TIMEOUT = 1
+GENERAL_TIMEOUT = 0
 SERVER_EXIT_FLAG = False
 BUFFER_SIZE = 8192
 
-class AlgoServerInterface(threading.Thread):
-    def __init__(self, name):
-        super().__init__()
-        self.name = name
-        self.protocol = PROTOCOL
-        self.server_ip = SERVER_IP
-        self.server_port = SERVER_PORT
-        self.max_client = MAX_CLIENT
+class AlgoServerInterface:
+    def __init__(self, rpi=None, protocol=PROTOCOL,
+                 rpi_ip=RPI_IP, algo_port= ALGO_PORT,
+                 max_client=MAX_CLIENT
+                 ):
+        # super().__init__()
+        self.rpi = rpi
+        self.protocol = protocol
+        self.rpi_ip = rpi_ip
+        self.algo_port = algo_port
+        self.max_client = max_client
+        self.s_sock = None
+        self.c_sock = None
     
-    def run(self):
-        print(f"[ALGO_S/INFO] Starting {self.name}")
-        self.setup_server_conn()
-        print(f"[ALGO_S/INFO] Closing socket...")
-        self.s_sock.close()
-        
-    def setup_server_conn(self):
-        self.s_sock = socket.socket(socket.AF_INET, self.protocol)
-        self.s_sock.bind((self.server_ip, self.server_port))
-        self.s_sock.listen(self.max_client)
-        # self.s_sock.setblocking(False)
-        self.s_sock.settimeout(SERVER_SOCKET_TIMEOUT)
-        print(f"[ALGO_S/INFO] Listening on {self.server_ip}:{self.server_port}")
-        while True:
-            try:
+    def connect(self) -> bool:
+        try:
+            self.s_sock = socket.socket(socket.AF_INET, self.protocol)
+            self.s_sock.bind((self.rpi_ip, self.algo_port))
+            self.s_sock.listen(self.max_client)
+            
+            print(f"[ALGO/INFO] Listening on {self.rpi_ip}:{self.algo_port}")
+        except Exception as e:
+            print(e)
+        else:
+            while True:
                 try:
                     self.c_sock, self.c_addr = self.s_sock.accept()
                 except socket.timeout:
                     pass
+                except KeyboardInterrupt:
+                    print("[ALGO/INFO] Keyboard interrupt received...")
+                    return False
                 else:
-                    self.c_sock.settimeout(GENERAL_TIMEOUT)
-                    print(f"[ALGO_S/INFO] Connection from {self.c_addr}")
-                    aci = AlgoClientInterface(self.c_sock, self.c_addr)
-                    aci.start()
-            except KeyboardInterrupt:
-                print("[ALGO_S/INFO] Keyboard interrupt received...")
-                SERVER_EXIT_FLAG = True
-                break
-
-class AlgoClientInterface(threading.Thread):
-    def __init__(self, c_sock, c_addr):
-        super().__init__()
-        self.c_sock = c_sock
-        self.c_addr = c_addr
-        self.buffer_size = BUFFER_SIZE
-
-    def run(self):
-        print(f"[ALGO_C/INFO] Starting {self.c_addr}")
-        self.listen_client_socket()
-        print(f"[ALGO_C/INFO] Exiting {self.c_addr}")
-        self.c_sock.close()
-
-    def listen_client_socket(self):
-        while not SERVER_EXIT_FLAG:
-            try:
-                data = self.c_sock.recv(self.buffer_size).decode()
-                if data:
-                    if self.proc_data(data): break
-            except socket.timeout:
-                pass
-
-    # data passed in argument is decoded data
-    def proc_data(self, data):
-        if data == "exit": return True
-        print(data)
+                    print(f"[ALGO/INFO] Connection from {self.c_addr}")
+                    self.s_sock.close()
+                    return True
         return False
-        
-if __name__ == "__main__":
-    asi = AlgoServerInterface("AlgoServerSocket")
-    asi.start()
+            
+    def disconnect(self):
+        if self.c_sock:
+            self.c_sock.close()
+        if self.s_sock:
+            self.s_sock.close()
+            
+    def send(self, data) -> None:
+        print(f"[ALGO/INFO] Sending {data}")
+        self.c_sock.sendall(data.encode())
+        print(f"[ALGO/INFO] Sent {data}")
     
-    
-'''
-ROBOT/4-15/(5, 11, 0)
-9MOVEMENTS/4-15/['F', 'F', 'F', 'F', 'FR', 'B', 'B', 'FL']
-'''
+    def receive(self) -> str:
+        while True:
+            try:
+                data = self.c_sock.recv(1024)
+                if data:
+                    data = data.decode().rstrip()       # remove any CR or CRLF
+                    print(f"[ALGO/INFO] Received {data}" )
+                    break
+            # except IOError as ioe:
+            #     #print(ioe)
+            #     pass
+            except KeyboardInterrupt:
+                break
+            except:
+                pass
+        return data

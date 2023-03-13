@@ -1,6 +1,6 @@
 """
 Filename: main.py
-Version: v0.5a
+Version: v3.1
 
 Starts all relevant threads required for MDP
 
@@ -28,124 +28,62 @@ btInterface.py
 210223 - Removed threading on MDPPi
 230223 - Logic for task A5
          Updated logic for sending of pictures
+260223 - Updated to taskv1
+       - Added logic between ANDROID <-> RPI, RPI <-> ALGO
+270223 - Moved thread_proc to dataHandler.py
 
 
 Order of connection STM -> IMGREC -> ALGO -> BT
+
+How data should be moved:
+Step 1: RPI receives from Android the obstacle -> sends to algo laptop, ANDROID_IN -> ALGO_OUT
+Step 2: RPI receives from Algo the shortest path -> sends to Android & buffer instructions ALGO_IN -> ANDROID_OUT, STM_OUT
+Step 3: RPI waits for Android "Start" before sending buffered instructions to STM, ANDROID_IN -> None 
+Step 4: RPI sends instructions to STM
+     4a: waits for acknowledgement when sub instruction is done, and send the next sub instruction
+     4b: when all sub instructions (aka full instructions done), take photo for imgrec and sends to Android, IMGREC_IN -> ANDROID_OUT
+Repeat step 4.
+
 """
+import time
 import modules 
-import threading
-
-from modules.helper import STM_IN, ANDROID_IN, ALGO_IN, IMGREC_IN, \
-                           STM_OUT, ANDROID_OUT, ALGO_OUT, IMGREC_OUT, \
-                           TAKE_PIC
-
-ID_ARRAY = []
 
 class MDPPi:
     def __init__(self):
         self.stm_int = modules.STMInterface()
-        self.im_int = modules.ImageRecInterface()
-        # self.algo_int = modules.AlgoServerInterface(name="MDP-Pi Algo Server")    # thread
-        # self.bt_int = modules.BTServerInterface(name="MDP-Pi BT Server")          # thread
-        self.lock = self.threading.Lock()
-        
+        self.bt_int = modules.BTServerInterface()          
+        self.algo_int = modules.AlgoServerInterface()
+        self.im_int = modules.ImageRecInterface(no_of_pic=6)
+        self.dh = modules.DataHandler(stm_int=self.stm_int,
+                                      bt_int=self.bt_int,
+                                      algo_int=self.algo_int,
+                                      im_int=self.im_int
+                                     )
     def __call__(self):
-        self.stm_int()          # Connect stm first
-        self.im_int()
-        # self.algo_int.start()
-        # self.bt_int.start()
+        if self.connect():
+            self.im_int.start_thread()
+            print("[PI/INFO] All devices connected successfully")
+            self.dh()
 
-        # print("[PI/INFO] All devices connected successfully")
-        print("[PI/INFO] MainPI RUNNING")
-        pi_worker = threading.Thread(target=self.thread_proc)
-        pi_worker.start()
-    
-    def kill_all_proc(self):
-        self.stm_int.kill_flag = True
-        self.im_int.kill_flag = True
-        # self.algo_int.kill_flag = True
-        # self.bt_int.kill_flag = True
-        
-    def thread_proc(self) -> None:        
-        while True:
-            try:
-                if not STM_IN.empty():
-                    self.stm_data()
-                if not ANDROID_IN.empty():
-                    self.android_data()
-                if not ALGO_IN.empty():
-                    self.algo_data()
-                if not IMGREC_IN.empty():
-                    self.imgrec_data()
-            except KeyboardInterrupt:
-                print("[PI/INFO] Keyboard Interrupt received")
-                self.kill_all_proc()
-                break
-    
-    def stm_data(self):
-        """
-        STM_IN will contain TAKE_PIC = "PIC"
-        """
-        data = STM_IN.get()
-        print(f"[PI/INFO] STM_IN: {data}")
-        if data == TAKE_PIC:
-            # self.im_int.take_picture()
-            # Flag set to true to start sending image
-            self.im_int.send_image_flag = True
-        # print(f"[PI/INFO] Putting '{data}' into ")
-    
-    def android_data(self):
-        #to, data = STM_IN.get()
-        #if to == "STM": STM_OUT.put(data)
-        #if to == "ALGO": ALGO_OUT.put(data)
-        #if to == "IMGREC": IMGREC_OUT.put(data)
-        data = ANDROID_IN.get()
-        print(f"[PI/INFO] ANDROID_IN: {data}")
-        # print(f"[PI/INFO] Putting '{data}' into STM_OUT")
-        # STM_OUT.put(data)
-        
-    def algo_data(self):
-        to, data = ALGO_IN.get()
-        if to == "ANDROID": ANDROID_OUT.put(data)
-        if to == "STM": STM_OUT.put(data)
-        if to == "IMGREC": IMGREC_OUT.put(data)
-    
-    def imgrec_data(self):
-        """
-        IMGREC_IN will always be inferred ID of the picture
-        most ocurring ID will be sent to ANDROID_OUT
-        """
-        global ID_ARRAY
-        
-        data = IMGREC_IN.get()
-        print(f"[PI/INFO] IMGREC_IN: {data}")
-        
-        self.lock.acquire()
-        ID_ARRAY.append(data)
-        self.lock.release()
-        
-        if len(ID_ARRAY) == self.im_int.no_of_pic:
-            # Flag set to false to stop sending image
-            filtered_list = list(filter(('99').__ne__, ID_ARRAY))
+            print("[PI/INFO] MainPI RUNNING")
+        print("[PI/INFO] Exiting MainPi")
+        self.clean_close()
             
-            # Completely no detection, retake another 5 frames
-            if len(filtered_list) == 0:
-                self.im_int.send_image_flag = True
-                
-            # detection present, find the most occuring ID
-            else:
-                most_occurring_id = int(max(set(filtered_list), key=filtered_list.count))
-                print(f"[PI/INFO] ID: {most_occurring_id}")
-                # image is bulleyes
-                if most_occurring_id == 0:
-                    # TASK1|[02090,01015,03090,11035,16090]
-                    # instr = "02090,01015,03090,11035"
-                    instr = "20010"
-                    STM_OUT.put(instr)
-                else:
-                    ANDROID_OUT.put(most_occurring_id)
-            ID_ARRAY = []
-            
+    def connect(self) -> bool:
+        print("[PI/INFO] Connecting devices")
+        stm_con = self.stm_int.connect()          # Connect stm first
+        im_con = self.im_int.connect()
+        algo_con = self.algo_int.connect()
+        bt_con = self.bt_int.connect()
+        return (stm_con and im_con and algo_con and bt_con)
+        #return True
+        
+    def clean_close(self) -> None:
+        self.stm_int.disconnect()
+        self.im_int.disconnect()
+        self.algo_int.disconnect()
+        self.bt_int.disconnect()
+        
 if __name__ == '__main__':
     pi = MDPPi()
     pi()
