@@ -21,23 +21,24 @@ import traceback
 # from PIL import Image
 
 
-MIN_CONFIDENCE_THRESHOLD = 0.75         # Change this to ensure no double results
+MIN_CONFIDENCE_THRESHOLD = 0.65         # Change this to ensure no double results
 NON_RED_CONFIDENCE_THRESHOLD = 0.55
 NMS_IOU = 0.55
 
 
-IMGREC_PORT = 12349
+IMGREC_PORT = 12348
 RPI_IP = "192.168.15.1"
-ZMQ_IP = "192.168.15.59"
+ZMQ_IP = "192.168.15.69"
 ZMQ_PORT = 5555
 
 #MODEL_PATH = os.path.join(".", "YOLOv5", "yolov5s.pt")     # ./bestv5.pt .\bestv5.pt
 MODEL_PATH = os.path.join(".", "bestv5.pt")     # ./bestv5.pt .\bestv5.pt
 YOLO_PATH = os.path.join(".","YOLOv5")
-#YOLO_PATH = os.path.join(".","yolov5_1")
-NO_OF_PIC = 5
 
-assets_dir = os.path.join('.','assets')
+NO_OF_PIC = 6
+
+CUR_DIR = os.path.dirname(os.path.abspath(__file__))
+IMG_DIR = os.path.join(CUR_DIR, 'static', "images")
 
 class ImgRecServer:
     def __init__(self, rpi_ip=RPI_IP, imgrec_port=IMGREC_PORT, 
@@ -52,6 +53,10 @@ class ImgRecServer:
         self.zmq_ip = zmq_ip
         self.zmq_port = zmq_port
         self.zmq_address = f"tcp://{self.zmq_ip}:{self.zmq_port}"
+        
+        # self.img_idx = self.get_file_count()
+        self.img_name = "image{img_idx}.{img_format}"
+        self.img_format = "jpg"
         
         self.model = self.load_model(model_path, yolo_path)
         input("> ")
@@ -76,7 +81,11 @@ class ImgRecServer:
     def get_image_hub(self):
             # imagezmq.ImageHub(open_port=self.zmq_address, REQ_REP=False)       # PUB/SUB
         return imagezmq.ImageHub(open_port=self.zmq_address)
-        
+    
+    def get_file_count(self) -> int:
+        _, _, files = next(os.walk(IMG_DIR))
+        return len(files)    
+    
     def connect_rpi(self):
         '''
         Create a socket and connect to RPI
@@ -96,9 +105,17 @@ class ImgRecServer:
 
                 #cv2.imshow(rpi_name, frame)
                 #cv2.waitKey(1)
+                
                 results = self.model(frame)
-                results.save(save_dir=assets_dir)
+                
+                results.save(save_dir=IMG_DIR)
+                # print("SAVING IMAGE")
+                # img_name = self.img_name.format(img_idx=self.img_idx, img_format=self.img_format)
+                # cv2.imwrite(os.path.join(IMG_DIR, img_name), results)
+                
+                # self.img_idx += 1
                 #results.show()            # show image with box
+                
                 pd = results.pandas().xyxy[0]
                 
                 # Get highest confidence ID based off all detection
@@ -106,8 +123,14 @@ class ImgRecServer:
                 
                 # Add id to array
                 self.id_array.append(highest_conf_id)
+                
                 if len(self.id_array) == NO_OF_PIC:
-                    most_occurring_id = int(max(set(self.id_array), key=self.id_array.count))                    
+                    filtered_list = list(filter((99).__ne__, self.id_array))
+                    print(filtered_list)
+                    if len(filtered_list) == 0: 
+                        most_occurring_id = 99
+                    else:
+                        most_occurring_id = int(max(set(self.id_array), key=self.id_array.count))                    
                     self.c_sock.sendall(str(most_occurring_id).encode())
                     self.id_array = list()
                     
@@ -128,7 +151,7 @@ class ImgRecServer:
             highest_confidence = pd['confidence'].max()
             for idx, row in pd.iterrows():    
                 if row['confidence'] == highest_confidence:
-                    return row['name']
+                    return int(row['name'])
                 
     def save_processed_photo(self, frame):
         pass
