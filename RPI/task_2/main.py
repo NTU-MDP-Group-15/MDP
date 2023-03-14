@@ -16,7 +16,7 @@ class MDPPi:
     def __init__(self):
         self.stm_int = modules.STMInterface()
         self.bt_int = modules.BTServerInterface()          
-        self.im_int = modules.ImageRecInterface(no_of_pic=6)
+        self.im_int = modules.ImageRecInterface(no_of_pic=3)
         self.dh = modules.DataHandler(stm_int=self.stm_int,
                                       bt_int=self.bt_int,
                                       im_int=self.im_int
