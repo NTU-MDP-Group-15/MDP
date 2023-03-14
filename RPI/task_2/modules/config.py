@@ -8,7 +8,9 @@ Class for setting up connection sockets for algo
 230223 - Added protocol variables
 060323 - Converted STM_IN/OUT Queue to Multiprocessor Queue
          BACK TO MULTI-THREADING
-
+150323 - Added livestream ports
+         moved directory variables
+         
 -------------------------------------------------------------------
 | Command (5bit) |     Action                                     |
 |------------------------------------------------------------------
@@ -28,8 +30,11 @@ import os
 import queue
 
 CUR_DIR = os.path.dirname(os.path.abspath(__file__))
-IMG_DIR = os.path.join(os.path.split(CUR_DIR)[0], "photos")
-
+MAIN_DIR = os.path.split(CUR_DIR)[0]
+IMG_DIR = os.path.join(MAIN_DIR, 'static', "images")
+MODEL_PATH = os.path.join(MAIN_DIR, "models", "best.pt")     # ./bestv5.pt .\bestv5.pt
+#MODEL_PATH = os.path.join(".", "T2_best_2.pt")     # ./bestv5.pt .\bestv5.pt
+YOLO_PATH = os.path.join(MAIN_DIR,"YOLOv5")
 
 # STM_OUT will only contain instructions in strings "01050,11030..."
 # STM_IN will contain "PIC"
@@ -41,7 +46,7 @@ IMGREC_IN, IMGREC_OUT = queue.Queue(), queue.Queue()
 OBSTACLE_ID = queue.Queue()
 
 RPI_IP = "192.168.15.1"
-IMG_ZMQ_IP = "192.168.15.69"
+IMG_ZMQ_IP = "192.168.15.59"
 ID_ZMQ_IP = "192.168.15.1"
 
 ALGO_PORT = 12345
@@ -50,9 +55,11 @@ BT_PORT = 12347
 IMGREC_PORT = 12348
 IMG_ZMQ_PORT = 5555
 ID_ZMQ_PORT = 5556
+LIVE_ZMQ_PORT = 5557
 
 TAKE_PIC = "PIC"
 NO_OF_PIC = 6
+IMG_FORMAT = "jpg"
 
 MOVEMENT_DICT = {
     "F": "01",
