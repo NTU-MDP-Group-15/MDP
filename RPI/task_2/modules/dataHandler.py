@@ -25,88 +25,81 @@ class DataHandler:
         self.im_int = im_int
         self.bt_int = bt_int
 
-        self.buffered_instr = list()
-        self.str_instr = str()
-        self.obstacle_id_order = list()
-        self.no_of_instr = 0
-        
     def __call__(self):
         self.dataHandler()
         
-    def dataHandler(self) -> None:
-        # Step 1: Receive obstacle from ANDROID
-        and_data = self.bt_int.receive()
-        
-        # Step 2: Send to Algo
-        self.algo_int.send(and_data)
-        
-        # Step 3: Receive from Algo                
-        stm_data, and_data = algo_data.split('AND/')
-        stm_data = stm_data.split("STM/")[-1]
-        
-        # Step 3.1: Buffer STM instructions
-        buffer_array = eval(stm_data)
-        
-        for ar in buffer_array:
-            self.buffered_instr.append(self.algo_to_stm(ar))
-        # self.no_of_instr = len(self.buffered_instr)
-        print("[DH/INFO] Buffered array")
-        
-        # Step 3.2: Send coordinates to android
-        self.bt_int.send(and_data)
-
-        # Step 4: Wait for android "START"
-        print("[DH/INFO] Ready & Waiting for start...")
-        and_data = self.bt_int.receive()
-        print("[DH/INFO] SENDING 30000")
-        self.stm_int.write(b"30000")
-        time.sleep(0.5)
-        
-        # Send instructions Steps 5-7
-        try:
-            while len(self.buffered_instr) > 0:
-                # Step 5: Send instruction to STM based on obstacle
-                instr = self.buffered_instr.pop(0)
-                sub_instr_arr = instr.split(',')
-                print(f"SUB_INSTR_ARR: {sub_instr_arr}")
-                
-                for sub_instr in sub_instr_arr:
-                    sub_instr = sub_instr.lstrip().rstrip().encode()
-                    self.stm_int.write(sub_instr)
-                    
-                    # Step 5.1: receive acknowledgement
+    def dataHandler(self) -> None:        
+        while True:
+            # Step 1: Wait for android "START"
+            print("[DH/INFO] Ready & Waiting for start...")
+            # and_data = self.bt_int.receive()
+            and_data = input("[START/exit]> ") 
+            if and_data != "START":
+                break
+            
+            print("[DH/INFO] SENDING 30000")
+            self.stm_int.write(b"30000")
+            time.sleep(0.5)
+            
+            self.stm_int.write(b"04000")     # move code
+            
+            id = ""
+            obstacle_count = 0
+            
+            try:
+                while id!="0":
+                    # Step X: Reached first obstacle to check left/right
                     while True: 
-
                         rcv_data = self.stm_int.readline()
                         if rcv_data != b'':
                             print(f"[DH_STM/INFO] received {rcv_data}")
-
                             # Done\x00 -> sub instruction completed
                             # ready to send next sub intruction, break out of loop
-                            # Step 5.2: Send done to android
+                            # Step X: Send done to android
                             if rcv_data == b'D':
-                                self.bt_int.send("[C11] MOV")
+                                obstacle_count+=1
                                 break
+                    
+                    # Step X: Take pictures and send to ImageRec Server
+                    back_counter = 0
+                    while True:
+                        self.im_int.send_image_flag = True
+                        id = int(self.im_int.receive())
+                        
+                        if obstacle_count == 1:
+                            # Move RIGHT
+                            if id == "38":
+                                self.stm_int.write(b"06000") #
+                                break
+                            # Move LEFT
+                            elif id == "39":
+                                self.stm_int.write(b"05000") #
+                                break
+                            
+                        elif obstacle_count == 2:
+                            # Move RIGHT
+                            if id == "38":
+                                self.stm_int.write(b"08000") #
+                                break
+                            # Move LEFT
+                            elif id == "39":
+                                self.stm_int.write(b"07000") #
+                                break
+                            
+                        # unable to determine left/right, move back and rescan                
+                        else:
+                            if back_counter == 3:
+                                break
+                            self.stm_int.write(b"11005")
+                            back_counter+=1
+                        
+                    if back_counter>0:
+                        dist = back_counter * 5
+                        self.stm_int.write(f"01{dist:03}".encode(0))
+                                
+            except KeyboardInterrupt:
+                return
                 
-                print(f"[DH_STM/INFO] Completed instructions")
-                # Step 6: Take pictures and send to ImageRec Server
-                #self.im_int.take_send_picture()
-                self.im_int.send_image_flag = True
-                '''
-                while self.im_int.send_image_flag == True: pass
-                self.stm_int.write(b"11005")
-                self.im_int.send_image_flag = True
-                while self.im_int.send_image_flag == True: pass
-                self.stm_int.write(b"01005")
-                '''
-                id = int(self.im_int.receive())
-                obs_id = self.obstacle_id_order.pop(0)
-            
-                # Step 7: Send ID info to Android
-                self.bt_int.send(f"[C9] {obs_id} {id}")
-        except KeyboardInterrupt:
-            return
-            
     def algo_to_stm(self, ar) -> str:
         """
         Args:

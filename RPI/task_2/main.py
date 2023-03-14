@@ -25,9 +25,9 @@ class MDPPi:
         if self.connect():
             self.im_int.start_thread()
             print("[PI/INFO] All devices connected successfully")
+            print("[PI/INFO] MainPI RUNNING")
             self.dh()
 
-            print("[PI/INFO] MainPI RUNNING")
         print("[PI/INFO] Exiting MainPi")
         self.clean_close()
             

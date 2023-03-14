@@ -9,6 +9,7 @@ pip install yolov5 instead of ultralytics
 """
 import os
 import cv2
+import zmq
 import time
 import torch
 import imagezmq
@@ -25,11 +26,14 @@ MIN_CONFIDENCE_THRESHOLD = 0.65         # Change this to ensure no double result
 NON_RED_CONFIDENCE_THRESHOLD = 0.55
 NMS_IOU = 0.55
 
-
-IMGREC_PORT = 12348
 RPI_IP = "192.168.15.1"
-ZMQ_IP = "192.168.15.69"
-ZMQ_PORT = 5555
+IMGREC_PORT = 12348
+
+IMG_ZMQ_IP = "192.168.15.69"
+IMG_ZMQ_PORT = 5555
+ID_ZMQ_IP = "192.168.15.1"
+ID_ZMQ_PORT = 5556
+
 
 #MODEL_PATH = os.path.join(".", "YOLOv5", "yolov5s.pt")     # ./bestv5.pt .\bestv5.pt
 MODEL_PATH = os.path.join(".", "bestv5.pt")     # ./bestv5.pt .\bestv5.pt
@@ -42,17 +46,27 @@ IMG_DIR = os.path.join(CUR_DIR, 'static', "images")
 
 class ImgRecServer:
     def __init__(self, rpi_ip=RPI_IP, imgrec_port=IMGREC_PORT, 
-                 zmq_ip=ZMQ_IP, zmq_port=ZMQ_PORT, 
+                 img_zmq_ip=IMG_ZMQ_IP, img_zmq_port=IMG_ZMQ_PORT, 
+                 id_zmq_ip=ID_ZMQ_IP, id_zmq_port=ID_ZMQ_PORT,
                  model_path=MODEL_PATH, yolo_path=YOLO_PATH,
                  ):
         
         self.id_array = list()        
         self.frame_counter = 0
+        
+        # Ports & IP addresses
         self.rpi_ip = rpi_ip
         self.imgrec_port = imgrec_port
-        self.zmq_ip = zmq_ip
-        self.zmq_port = zmq_port
-        self.zmq_address = f"tcp://{self.zmq_ip}:{self.zmq_port}"
+        self.img_zmq_ip = img_zmq_ip
+        self.img_zmq_port = img_zmq_port
+        
+        self.id_zmq_ip=id_zmq_ip
+        self.id_zmq_port=id_zmq_port
+        
+        self.img_zmq_address = f"tcp://{self.img_zmq_ip}:{self.img_zmq_port}"
+        self.id_zmq_address = f"tcp://{self.id_zmq_ip}:{self.id_zmq_port}"
+        print(f"[IMGREC/INFO] img_zmq_address: {self.img_zmq_address}")
+        print(f"[IMGREC/INFO] id_zmq_address: {self.id_zmq_address}")
         
         # self.img_idx = self.get_file_count()
         self.img_name = "image{img_idx}.{img_format}"
@@ -62,8 +76,8 @@ class ImgRecServer:
         input("> ")
         
         self.image_hub = self.get_image_hub()
-        self.c_sock = self.connect_rpi()
-        
+        self.id_pub = self.get_id_pub()
+        # self.c_sock = self.connect_rpi()
         print("[IMGREC_S/INFO] Finish basic initialisation")
 
     def load_model(self, model_path, yolo_path):
@@ -80,7 +94,13 @@ class ImgRecServer:
 
     def get_image_hub(self):
             # imagezmq.ImageHub(open_port=self.zmq_address, REQ_REP=False)       # PUB/SUB
-        return imagezmq.ImageHub(open_port=self.zmq_address)
+        return imagezmq.ImageHub(open_port=self.img_zmq_address)
+    
+    def get_id_pub(self):
+        context = zmq.Context()
+        socket = context.socket(zmq.PUB)
+        socket.connect(self.id_zmq_address)
+        return socket
     
     def get_file_count(self) -> int:
         _, _, files = next(os.walk(IMG_DIR))
@@ -131,16 +151,15 @@ class ImgRecServer:
                         most_occurring_id = 99
                     else:
                         most_occurring_id = int(max(set(self.id_array), key=self.id_array.count))                    
-                    self.c_sock.sendall(str(most_occurring_id).encode())
+                    # self.c_sock.sendall(str(most_occurring_id).encode())
+                    self.id_pub.send_string(most_occurring_id)
                     self.id_array = list()
                     
             except KeyboardInterrupt:
                 print("[IMGREC_S/INFO] KeyboardInterrupt received")
-                self.c_sock.sendall(b"disconnect")
                 break
             
             except:
-                self.c_sock.sendall(b"disconnect")
                 traceback.print_exc()   
                 break  
         cv2.destroyAllWindows()
