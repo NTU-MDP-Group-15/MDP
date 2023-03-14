@@ -34,7 +34,7 @@ ID_ZMQ_PORT = 5556
 
 
 #MODEL_PATH = os.path.join(".", "YOLOv5", "yolov5s.pt")     # ./bestv5.pt .\bestv5.pt
-# MODEL_PATH = os.path.join(".", "best.pt")     # ./bestv5.pt .\bestv5.pt
+# MODEL_PATH = os.path.join(".", "models","best.pt")     # ./bestv5.pt .\bestv5.pt
 MODEL_PATH = os.path.join(".", "models", "T2_best_2.pt")     # ./bestv5.pt .\bestv5.pt
 YOLO_PATH = os.path.join(".","YOLOv5")
 
@@ -87,6 +87,7 @@ class ImgRecServer:
                                source='local')         # offline load
         model.conf = MIN_CONFIDENCE_THRESHOLD
         model.iou = NMS_IOU
+        # model.classes = [1,2]
         print("[IMGREC_S/INFO] Loaded model")
         return model
 
@@ -180,9 +181,11 @@ class ImgRecServer:
         
         pd = results.pandas().xyxy[0]
         
-        i = pd[(pd["name"] == "0")].index
-        print(i)
-        pd = pd.drop(i)
+        # i = pd[(pd["name"] == "0")].index
+        # print(i)
+        # pd = pd.drop(i)
+        
+        # cv2.imwrite(filepath, plotted)
         
         for idx, row in pd.iterrows():    
             print(row)
@@ -207,5 +210,5 @@ class ImgRecServer:
     
 if __name__=="__main__":
     im = ImgRecServer()
-    im()
-    # im.test()
+    #im()
+    im.test()
