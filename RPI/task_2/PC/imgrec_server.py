@@ -35,7 +35,7 @@ ID_ZMQ_PORT = 5556
 
 #MODEL_PATH = os.path.join(".", "YOLOv5", "yolov5s.pt")     # ./bestv5.pt .\bestv5.pt
 # MODEL_PATH = os.path.join(".", "best.pt")     # ./bestv5.pt .\bestv5.pt
-MODEL_PATH = os.path.join(".", "T2_best_2.pt")     # ./bestv5.pt .\bestv5.pt
+MODEL_PATH = os.path.join(".", "models", "T2_best_2.pt")     # ./bestv5.pt .\bestv5.pt
 YOLO_PATH = os.path.join(".","YOLOv5")
 
 NO_OF_PIC = 3
