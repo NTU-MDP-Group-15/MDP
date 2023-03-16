@@ -15,22 +15,8 @@ class ArenaViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ArenaUiState())
     val uiState: StateFlow<ArenaUiState> = _uiState.asStateFlow()
 
-    // Set Arena Grid Size
-    fun setGridSize(width: Int, height: Int) {
-        var w = 0
-        var h = 0
-        if (width in 0..20) {
-            w = width
-        }
-        if (height in 0..20) {
-            h = height
-        }
-        _uiState.update { currentState ->
-            currentState.copy(
-                gridWidth = w,
-                gridHeight = h
-            )
-        }
+    fun getTaskMode() : String{
+        return _uiState.value.taskMode
     }
 
     // Set Task Configuration Mode (Image Reg/Fastest Track)
@@ -124,7 +110,8 @@ class ArenaViewModel : ViewModel() {
         val coordinatesAndFacingList = payload.split(",")
         _uiState.update { currentState ->
             currentState.copy(
-                storedCoordinates = coordinatesAndFacingList
+                storedCoordinates = coordinatesAndFacingList,
+                coordinateCounter = 3
             )
         }
     }
@@ -174,6 +161,16 @@ class ArenaViewModel : ViewModel() {
                 robotPosY = y,
                 robotFacing = facing,
                 coordinateCounter = count + 3
+            )
+        }
+    }
+
+    fun resetRobot() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                robotPosX = 1,
+                robotPosY = 1,
+                robotFacing = "N"
             )
         }
     }

@@ -56,34 +56,54 @@ fun ArenaScreen(
                 .fillMaxHeight(1f)
                 .fillMaxWidth(1f)
         ) {
-            StatusDisplay(arenaUiState = arenaUiState)
-            Spacer(modifier = Modifier.padding(bottom = spacerDP))
-            Text(text = "Robot Status", fontSize = 20.sp)
-            TextField(
-                modifier = Modifier
-                    .fillMaxWidth(0.95f)
-                    .fillMaxHeight(0.3f),
-                value = arenaUiState.robotStatusMessage,
-                onValueChange = {},
-                readOnly = true
-            )
-            Spacer(modifier = Modifier.padding(bottom = spacerDP))
-            TaskModeInput(viewModel = viewModel)
-            Spacer(modifier = Modifier.padding(bottom = spacerDP))
-            ObstacleInput(
-                viewModel = viewModel,
-                arenaUiState = arenaUiState
-            )
-            Spacer(modifier = Modifier.padding(bottom = 15.dp))
-            Row(){
-                ClearObstacles(viewModel = viewModel)
-                Spacer(modifier = Modifier.padding(5.dp))
-                SendObstacles(bluetoothService = bluetoothService, arenaUiState = arenaUiState)
-                Spacer(modifier = Modifier.padding(5.dp))
+            if (arenaUiState.taskMode=="Image Recognition") {
+                ImageRecScreen(
+                    arenaUiState = arenaUiState,
+                    viewModel = viewModel,
+                    bluetoothService = bluetoothService
+                )
+            }
+            else {
+                StatusDisplay(arenaUiState = arenaUiState)
+                Spacer(modifier = Modifier.padding(bottom = spacerDP))
+                TaskModeInput(viewModel = viewModel)
+                Spacer(modifier = Modifier.padding(bottom = spacerDP))
                 StartRobot(bluetoothService = bluetoothService)
             }
         }
     }
+}
+
+@Composable
+fun ImageRecScreen(arenaUiState: ArenaUiState, viewModel: ArenaViewModel, bluetoothService: BluetoothService) {
+    StatusDisplay(arenaUiState = arenaUiState)
+    Spacer(modifier = Modifier.padding(bottom = spacerDP))
+    TaskModeInput(viewModel = viewModel)
+    Spacer(modifier = Modifier.padding(bottom = spacerDP))
+    Text(text = "Robot Status", fontSize = 20.sp)
+    TextField(
+        modifier = Modifier
+            .fillMaxWidth(0.95f)
+            .fillMaxHeight(0.3f),
+        value = arenaUiState.robotStatusMessage,
+        onValueChange = {},
+        readOnly = true
+    )
+    Spacer(modifier = Modifier.padding(bottom = spacerDP))
+
+    ObstacleInput(
+        viewModel = viewModel,
+        arenaUiState = arenaUiState
+    )
+    Spacer(modifier = Modifier.padding(bottom = 15.dp))
+    Row(){
+        ClearObstacles(viewModel = viewModel)
+        Spacer(modifier = Modifier.padding(5.dp))
+        SendObstacles(bluetoothService = bluetoothService, arenaUiState = arenaUiState)
+        Spacer(modifier = Modifier.padding(5.dp))
+        StartRobot(bluetoothService = bluetoothService)
+    }
+    RestartRobot(viewModel = viewModel)
 }
 
 @Composable
@@ -360,8 +380,9 @@ fun DrawRobot(
 fun TaskModeInput(viewModel: ArenaViewModel) {
     val imgReg = "Image Recognition"
     val fastCar = "Fastest Car"
+    val task = viewModel.getTaskMode()
 
-    val selectedTask = remember { mutableStateOf(imgReg) }
+    val selectedTask = remember { mutableStateOf(task) }
     val taskModes = listOf(imgReg, fastCar)
 
     Row(
@@ -463,7 +484,7 @@ fun ClearObstacles(viewModel: ArenaViewModel) {
         colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
     ) {
         Text(
-            text = "CLEAR ALL",
+            text = "Clear All",
             color = Color.White
         )
     }
@@ -479,7 +500,7 @@ fun StartRobot(
         colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF15AB13))
     ) {
         Text(
-            text="START",
+            text="Start",
             color = Color.White
         )
     }
@@ -500,6 +521,18 @@ fun SendObstacles(
         )
     }) {
         Text(text="Send Obstacles")
+    }
+}
+
+@Composable
+fun RestartRobot(viewModel: ArenaViewModel) {
+    Button(
+        onClick = { viewModel.resetRobot() },
+    ) {
+        Text(
+            text = "Reset Robot",
+            color = Color.White
+        )
     }
 }
 
