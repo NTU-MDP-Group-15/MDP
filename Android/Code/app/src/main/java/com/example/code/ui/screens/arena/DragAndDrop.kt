@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.IntSize
 
 internal val LocalDragTargetInfo = compositionLocalOf { DragTargetInfo() }
 
+//Logic to make activity that can detect and display drag and drop gestures
 @Composable
 fun DraggableScreen(
     modifier: Modifier = Modifier,
@@ -52,6 +53,7 @@ fun DraggableScreen(
     }
 }
 
+//Create a draggable target(for drag and drop of obstacles)
 @Composable
 fun <T> DragTarget(
     modifier: Modifier = Modifier,

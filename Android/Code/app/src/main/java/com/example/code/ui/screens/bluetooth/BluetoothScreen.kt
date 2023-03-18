@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import com.example.code.service.BluetoothService
 import com.example.code.ui.viewmodels.BluetoothViewModel
 
+//Load bluetooth screen
 @SuppressLint("MissingPermission")
 @Composable
 fun BluetoothScreen(
@@ -74,6 +75,7 @@ fun BluetoothScreen(
     }
 }
 
+//Scrollable list of discovered devices, with option to connect to device
 @SuppressLint("MissingPermission")
 @Composable
 fun LazyColumn(

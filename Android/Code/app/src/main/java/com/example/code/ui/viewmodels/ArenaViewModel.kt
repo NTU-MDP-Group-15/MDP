@@ -2,7 +2,6 @@ package com.example.code.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.example.code.service.BluetoothService
-import com.example.code.service.MessageService
 import com.example.code.ui.states.ArenaUiState
 import com.example.code.ui.states.Obstacle
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,16 +9,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+//Methods to change arena states
 class ArenaViewModel : ViewModel() {
     // Arena UI State
     private val _uiState = MutableStateFlow(ArenaUiState())
     val uiState: StateFlow<ArenaUiState> = _uiState.asStateFlow()
 
+    // Get Task Configuration mode (Image Reg/Fastest Car)
     fun getTaskMode() : String{
         return _uiState.value.taskMode
     }
 
-    // Set Task Configuration Mode (Image Reg/Fastest Track)
+    // Set Task Configuration Mode (Image Reg/Fastest Car)
     fun setTaskMode(taskMode: String) {
         _uiState.update { currentState -> currentState.copy(taskMode = taskMode) }
     }
@@ -43,7 +44,8 @@ class ArenaViewModel : ViewModel() {
         }
     }
 
-    fun changeObstacleFacing(obstacle: Obstacle, bluetoothService: BluetoothService) {
+    // Change orientation of obstacle image facing
+    fun changeObstacleFacing(obstacle: Obstacle) {
         val obstacles = _uiState.value.obstacles.filter { obs -> obs.id != obstacle.id }
         var facing = ""
         when (obstacle.facing) {
@@ -116,6 +118,7 @@ class ArenaViewModel : ViewModel() {
         }
     }
 
+    //To check if orientation of robot and obstacle image facings are valid
     private fun toFacing(degree: String) : String {
         var facing = ""
 
@@ -128,6 +131,7 @@ class ArenaViewModel : ViewModel() {
         return facing
     }
 
+    //To check if coordinates received are within the grid(10cm buffer from edge of arena)
     private fun validCoordinates(coordinate: Int):Boolean {
         val list = (1..18).toList()
         if (list.contains(coordinate)) {
@@ -165,6 +169,7 @@ class ArenaViewModel : ViewModel() {
         }
     }
 
+    //Reset robot back to start position, facing north
     fun resetRobot() {
         _uiState.update { currentState ->
             currentState.copy(
@@ -182,6 +187,7 @@ class ArenaViewModel : ViewModel() {
         }
     }
 
+    // Set connection status
     fun updateBTConnectionStatus(status: Int) {
         if (status == 3) {
             _uiState.update { currentState ->

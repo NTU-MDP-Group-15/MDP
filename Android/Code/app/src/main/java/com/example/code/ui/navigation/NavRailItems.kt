@@ -12,6 +12,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.code.R
 
+//Navigation bar for ease of toggling between menus
 @Composable
 fun NavRailItems(navController: NavHostController, items: List<String>) {
     val icons = listOf(

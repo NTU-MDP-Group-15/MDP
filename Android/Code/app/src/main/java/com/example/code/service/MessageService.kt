@@ -5,8 +5,8 @@ import com.example.code.ui.states.Obstacle
 
 class MessageService {
     companion object {
+        // Message parsing for messages received from rPi
         fun parseMessage(buffer: ByteArray, bytes: Int): HashMap<String, String> {
-            // Note to change protocol for checklist
             val result = HashMap<String, String>()
             val msg = String(buffer, 0, bytes)
             val list: List<String> = msg.split(" ")
@@ -75,30 +75,7 @@ class MessageService {
             return parsedMsg
         }
 
-        // C6: Obstacle Placement
-        // Action,ID,X,Y,Facing
-        // e.g. ADD,1,5,9,N
-        fun sendAddObstacle(bts: BluetoothService, id: Int, x: Int, y: Int) {
-            val msg = "ADD,$id,$x,$y"
-            bts.write(toByteArray(msg))
-        }
-
-        // C6: Obstacle Removal
-        // Action,ID
-        // e.g. SUB,1
-        fun sendSubObstacle(bts: BluetoothService, id: Int) {
-            val msg = "SUB,$id"
-            bts.write(toByteArray(msg))
-        }
-
-        // C7: Obstacle Image Facing
-        // ID,Facing
-        // e.g. 1,S
-        fun sendObstacleFacing(bts: BluetoothService, id: Int, facing: String) {
-            val msg = "$id,$facing"
-            bts.write(toByteArray(msg))
-        }
-
+        // Start command for STM, transmitted through rPi
         fun sendStartSignal(bts: BluetoothService) {
             val msg = "START"
             bts.write(toByteArray(msg))
@@ -135,12 +112,13 @@ class MessageService {
             result["TAG"] = "C10"
             result["payload"] = list[1]
             return "Invalid Robot Position or Facing"
-    }
+        }
         
         private fun isInteger(s: String?): Boolean {
             return s!!.toIntOrNull() != null
         }
 
+        // Obstacle layout: sent to algorithm to perform path planning
         fun sendObstacles(bts: BluetoothService, obstacleList: List<Obstacle>,
                           robotX: Int, robotY: Int, robotFacing: String) {
 
@@ -172,6 +150,7 @@ class MessageService {
             return degree
         }
 
+        // Update robot position on tablet display
         private fun updateRobotPosFacing(result: HashMap<String, String>) : String {
             result["TAG"] = "C11"
             return "Update Robot Position"

@@ -16,6 +16,7 @@ import com.example.code.R
 import com.example.code.service.BluetoothService
 import com.example.code.ui.viewmodels.BluetoothViewModel
 
+//Load debug screen
 @Composable
 fun DebugScreen(
     viewModel: BluetoothViewModel,
@@ -77,6 +78,7 @@ fun DebugScreen(
     }
 }
 
+//Debug buttons to test robot movements
 @Composable
 fun RobotMovementButtons(btService: BluetoothService) {
     Column(
@@ -113,6 +115,7 @@ fun RobotMovementButtons(btService: BluetoothService) {
     }
 }
 
+//Send movement information to STM
 @Composable
 fun MovementButton(btService: BluetoothService, msg: String, resID: Int, description: String) {
     Button(

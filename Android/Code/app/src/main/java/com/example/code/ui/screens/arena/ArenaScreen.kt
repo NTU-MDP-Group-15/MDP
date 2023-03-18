@@ -1,9 +1,7 @@
 package com.example.code.ui.screens.arena
 
-import android.os.Message
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,19 +12,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.code.R
 import com.example.code.service.BluetoothService
 import com.example.code.service.MessageService
 import com.example.code.ui.states.ArenaUiState
-import com.example.code.ui.states.BluetoothUiState
 import com.example.code.ui.states.Obstacle
 import com.example.code.ui.viewmodels.ArenaViewModel
 
 val spacerDP = 10.dp
 
+//Load arena screen
 @Composable
 fun ArenaScreen(
     viewModel: ArenaViewModel,
@@ -46,8 +43,7 @@ fun ArenaScreen(
         ) {
             ArenaGrid(
                 arenaUiState = arenaUiState,
-                viewModel = viewModel,
-                bluetoothService = bluetoothService
+                viewModel = viewModel
             )
         }
         // Configuration Settings
@@ -74,6 +70,7 @@ fun ArenaScreen(
     }
 }
 
+//To display if task selected if Image Recognition
 @Composable
 fun ImageRecScreen(arenaUiState: ArenaUiState, viewModel: ArenaViewModel, bluetoothService: BluetoothService) {
     StatusDisplay(arenaUiState = arenaUiState)
@@ -106,6 +103,7 @@ fun ImageRecScreen(arenaUiState: ArenaUiState, viewModel: ArenaViewModel, blueto
     RestartRobot(viewModel = viewModel)
 }
 
+//Task & connectivity display
 @Composable
 fun StatusDisplay(arenaUiState: ArenaUiState) {
     Row(modifier = Modifier.fillMaxWidth(1f)) {
@@ -120,11 +118,11 @@ fun StatusDisplay(arenaUiState: ArenaUiState) {
     }
 }
 
+//Drawing 20x20 arena grid
 @Composable
 fun ArenaGrid(
     arenaUiState: ArenaUiState,
-    viewModel: ArenaViewModel,
-    bluetoothService: BluetoothService
+    viewModel: ArenaViewModel
 ) {
     val coordinateFontSize = 15.sp
     Box(
@@ -149,7 +147,6 @@ fun ArenaGrid(
                                     xCoordinate = i,
                                     yCoordinate = j,
                                     arenaUiState = arenaUiState,
-                                    bluetoothService = bluetoothService
                                 )
                             }
                         } else {
@@ -158,7 +155,6 @@ fun ArenaGrid(
                                 xCoordinate = i,
                                 yCoordinate = j,
                                 arenaUiState = arenaUiState,
-                                bluetoothService = bluetoothService
                             )
                         }
                     }
@@ -172,10 +168,10 @@ fun ArenaGrid(
     }
 }
 
+//Individual grid boxes
 @Composable
 fun GridBox(
     viewModel: ArenaViewModel,
-    bluetoothService: BluetoothService,
     arenaUiState: ArenaUiState,
     xCoordinate: Int,
     yCoordinate: Int,
@@ -188,8 +184,7 @@ fun GridBox(
         if (self.isNotEmpty()) {
             DrawObstacle(
                 obstacle = self.first(),
-                viewModel = viewModel,
-                bluetoothService = bluetoothService
+                viewModel = viewModel
             )
         } else {
             if (obstacle != null) {
@@ -239,6 +234,9 @@ fun GridBox(
     }
 }
 
+//To check if robot has 'left' the grid;
+//Valid coordinates: True, draw robot onto grid box
+//Invalid coordinates: False, do not draw robot onto grid box
 private fun inRobotBound(
     x: Int,
     y: Int,
@@ -256,11 +254,12 @@ private fun inRobotBound(
     return inXBound && inYBound
 }
 
+//If obstacle is occupying a particular grid box, draw obstacle on the grid
+//Tap gestures captured to change orientation of image facing
 @Composable
 fun DrawObstacle(
     obstacle: Obstacle,
     viewModel: ArenaViewModel,
-    bluetoothService: BluetoothService
 ) {
     Box(
         modifier = Modifier
@@ -269,7 +268,7 @@ fun DrawObstacle(
             .aspectRatio(1f)
             .background(Color.Black)
             .clickable {
-                viewModel.changeObstacleFacing(obstacle, bluetoothService)
+                viewModel.changeObstacleFacing(obstacle)
             },
         contentAlignment = Alignment.Center
     ) {
@@ -323,6 +322,7 @@ fun DrawObstacle(
     }
 }
 
+//If grid box is occupied by robot, draw robot on the grid
 @Composable
 fun DrawRobot(
     Orientation: String,
@@ -376,6 +376,7 @@ fun DrawRobot(
     }
 }
 
+//To switch between Fastest Car task and Image Recognition task
 @Composable
 fun TaskModeInput(viewModel: ArenaViewModel) {
     val imgReg = "Image Recognition"
@@ -411,6 +412,7 @@ fun TaskModeInput(viewModel: ArenaViewModel) {
     }
 }
 
+//Drag and drop of obstacles
 @Composable
 fun ObstacleInput(
     viewModel: ArenaViewModel,
@@ -477,6 +479,7 @@ fun ObstacleInput(
     }
 }
 
+//Clear out the grid
 @Composable
 fun ClearObstacles(viewModel: ArenaViewModel) {
     Button(
@@ -490,13 +493,14 @@ fun ClearObstacles(viewModel: ArenaViewModel) {
     }
 }
 
+//Start button to begin tasks
 @Composable
 fun StartRobot(
     bluetoothService: BluetoothService
 ) {
     Button(
         onClick = {
-        MessageService.sendStartSignal(bts=bluetoothService) },
+        MessageService.sendStartSignal(bts=bluetoothService)},
         colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF15AB13))
     ) {
         Text(
@@ -506,6 +510,7 @@ fun StartRobot(
     }
 }
 
+//Send button to send list of obstacles to algorithm for path planning
 @Composable
 fun SendObstacles(
     bluetoothService: BluetoothService,
@@ -524,6 +529,7 @@ fun SendObstacles(
     }
 }
 
+//Reset robot position to starting point
 @Composable
 fun RestartRobot(viewModel: ArenaViewModel) {
     Button(
