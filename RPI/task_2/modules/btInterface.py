@@ -53,11 +53,17 @@ class BTServerInterface:
             self.s_sock.close()
             
     def send(self, data) -> None:
+        '''
+        Function used to send data through bluetooth socket
+        '''
         print(f"[BT/INFO] Sending {data}")
         self.c_sock.sendall(data)
         print(f"[BT/INFO] Sent {data}")
         
     def receive(self) -> str:
+        '''
+        Function used to receive data through bluetook socket
+        '''
         while True:
             try:
                 data = self.c_sock.recv(1024)

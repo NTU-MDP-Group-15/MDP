@@ -46,7 +46,7 @@ IMGREC_IN, IMGREC_OUT = queue.Queue(), queue.Queue()
 OBSTACLE_ID = queue.Queue()
 
 RPI_IP = "192.168.15.1"
-IMG_ZMQ_IP = "192.168.15.59"
+IMG_ZMQ_IP = "192.168.15.69"
 ID_ZMQ_IP = "192.168.15.1"
 
 ALGO_PORT = 12345

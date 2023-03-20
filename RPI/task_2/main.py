@@ -16,7 +16,7 @@ class MDPPi:
     def __init__(self):
         self.stm_int = modules.STMInterface()
         self.bt_int = modules.BTServerInterface()          
-        self.im_int = modules.ImageRecInterface(no_of_pic=3)
+        self.im_int = modules.ImageRecInterface(no_of_pic=1)
         self.dh = modules.DataHandler(stm_int=self.stm_int,
                                       bt_int=self.bt_int,
                                       im_int=self.im_int
@@ -47,7 +47,6 @@ class MDPPi:
         if bt_con: print("[PI/INFO] ANDROID CONNECTED") 
         else: print("[PI/INFO] ANDROID NOT CONNECTED")
         return (stm_con and im_con and bt_con)
-        #return True
         
     def clean_close(self) -> None:
         self.stm_int.disconnect()

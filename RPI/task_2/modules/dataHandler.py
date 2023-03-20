@@ -27,13 +27,14 @@ class DataHandler:
             # Step 1: Wait for android "START"
             print("[DH/INFO] Ready & Waiting for start...")
             and_data = self.bt_int.receive()
-            # try:
-            #     and_data = input("[START/exit]> ") 
-            #     if and_data != "START":
-            #         break
-            # except KeyboardInterrupt:
-            #     break
-            
+            try:
+                if and_data != "START":
+                    break
+            except KeyboardInterrupt:
+                break
+            a_start_time = time.time()
+
+            # Sending a reset case
             print("[DH/INFO] SENDING 30000")
             self.stm_int.write(b"30000")
             time.sleep(0.5)
@@ -43,40 +44,47 @@ class DataHandler:
             
             self.send_command("04000")
             try:
-                while True:
+                while stage<2:
                     # Step X: Take pictures and send to ImageRec Server
                     back_counter = 0
                     # cmd = str()
                     
                     while True:
-                        #start_time = time.time()
                         self.im_int.send_image_flag = True
                         id = self.im_int.receive()
-                        #print(f"ID Received: {id}")
-                        #print(f"Time taken to send + get ID - {time.time() - start_time}s")
                         
                         cmd = self.proc_id(stage, id)
                         
                         if cmd != "": break
+                        """
                         else:
-                            self.send_command("11010")
+                            self.send_command("11005")
                             back_counter+=1
-                    
+                        """
+                    """
                     if back_counter>0:
                         print(f"GO BACK back_counter: {back_counter}")
-                        dist = back_counter * 10
+                        dist = back_counter * 5
                         self.send_command(f"01{dist:03}")
-                    
+                    """
                     self.send_command(cmd)
                     stage += 1
+                    self.send_command("04000")
 
                     if stage==2:
-                        break
+                        self.send_command("04000")
+                        self.send_command("09000")
+                        self.send_command("10000")
                         
             except KeyboardInterrupt:
                 return
-                
+            
+            print("total runtime: ", time.time() - a_start_time)
+            
     def send_command(self, cmd) -> bool:
+        '''
+        Write & receive data through STM
+        '''
         self.stm_int.write(cmd.encode())
         
         while True:
@@ -85,7 +93,6 @@ class DataHandler:
                 print(f"[DH_STM/INFO] received {rcv_data}")
                 # Done\x00 -> sub instruction completed
                 # ready to send next sub intruction, break out of loop
-                # Step X: Send done to android
                 if rcv_data == b'D':
                     return True
     
@@ -96,15 +103,13 @@ class DataHandler:
             if id == "38":
                 cmd = "06000"
             # MOVE LEFT
-            if id == "37":
-            #if id == "39":
+            if id == "39":
                 cmd = "05000"
         if stage == 1:
             # MOVE RIGHT
             if id == "38":
                 cmd = "08000"
             # Move LEFT
-            if id == "37":
-            #if id == "39":
+            if id == "39":
                 cmd = "07000"
         return cmd

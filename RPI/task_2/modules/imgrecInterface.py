@@ -83,12 +83,18 @@ class ImageRecInterface:
     
     
     def connect(self) -> bool:
+        '''
+        Function used to open sockets to receive/send data
+        '''
         self.img_sender = self.get_image_sender() 
         self.id_sub = self.get_id_sub()
         self.live_sender = self.get_live_stream_sender()
         return True
         
     def disconnect(self) -> None:
+        '''
+        Function used to properly kill threads & any existing open sockets/camera
+        '''
         print("[IMGREC/INFO] Setting kill_flag = True")
         self.kill_flag = True
         if self.s_sock: 
@@ -103,6 +109,9 @@ class ImageRecInterface:
         sv_thread.start()
     
     def get_video_capture(self) -> cv2.VideoCapture:
+        '''
+        Function used to open RPI camera using cv2
+        '''
         cap = cv2.VideoCapture(self.capture_index)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
@@ -113,13 +122,21 @@ class ImageRecInterface:
         return cap
     
     def get_image_sender(self) -> imagezmq.ImageSender:
-        # imagezmq.ImageSender(connect_to=self.zmq_address, REQ_REP=False)
+        '''
+        Function used to open REQ/REP imagezmq socket to send images
+        '''
         return imagezmq.ImageSender(connect_to=self.img_zmq_address)
     
     def get_live_stream_sender(self) -> imagezmq.ImageSender:
+        '''
+        Function used to open PUB/SUB imagezmq socket to send images
+        '''
         return imagezmq.ImageSender(connect_to=self.live_zmq_address, REQ_REP=False)
         
     def get_id_sub(self) -> zmq.Context:
+        '''
+        Function used to open PUB/SUB zmq socket to receive str
+        '''
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
         # accept all topics (prefixed) - default is none
@@ -130,6 +147,9 @@ class ImageRecInterface:
     
     
     def receive(self) -> str:
+        '''
+        Function used to receive ID from image rec server.
+        '''
         while True:
             rcv_data = self.id_sub.recv_string()
             print(f"[IMGREC/INFO] IMGREC received {rcv_data}")
@@ -137,6 +157,10 @@ class ImageRecInterface:
         return rcv_data 
         
     def send_video(self) -> "workerThread":
+        '''
+        Keeps running RPI camera. When send_image_flag is set to true, it will
+        start sending images to image rec server 
+        '''
         print("[IMGREC_VID/INFO] Starting video thread")
         while not self.kill_flag:
             _, l_frame = self.picam.read()
