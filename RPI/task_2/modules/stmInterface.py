@@ -122,7 +122,6 @@ class STMInterface:
         Function used to send data to STM
         '''
         print(f"[STM/INFO] Sending {data}")
-        #self.stm.flushInput()
         self.stm.write(data)
         self.stm.flushInput()        # self.stm.flushInput()
         print(f"[STM/INFO] Sent {data}")

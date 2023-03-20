@@ -144,8 +144,6 @@ class ImageRecInterface:
         socket.bind(self.id_zmq_address)
         return socket
     
-    
-    
     def receive(self) -> str:
         '''
         Function used to receive ID from image rec server.

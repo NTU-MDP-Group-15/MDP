@@ -59,6 +59,9 @@ class STMInterface:
         self.connect()
         
     def connect(self) -> bool:
+        '''
+        Function used to open socket to communicate with STM
+        '''
         while True:
             print(f"[STM/INFO] Attempt connection on port: {self.port}")
             try:
@@ -94,7 +97,10 @@ class STMInterface:
                     break
         return False
 
-    def disconnect(self):                
+    def disconnect(self):        
+        '''
+        Function used to properly close any open sockets
+        '''         
         if self.stm:
             try:
                 print(f"[STM/INFO] Disconnecting on {self.port}")
@@ -102,20 +108,20 @@ class STMInterface:
             except:
                 print(f"[STM/Error] Failed to disconnect")
                 traceback.print_exc()
-
-    def reconnect(self):
-        self.stm.close()
-        self.connect()
-        return True
         
     def readline(self) -> bytes:
+        '''
+        Function used to receive data from STM
+        '''
         rcv_data = self.stm.readline()
         self.stm.flushOutput()
         return rcv_data
     
     def write(self, data) -> None:
+        '''
+        Function used to send data to STM
+        '''
         print(f"[STM/INFO] Sending {data}")
-        #self.stm.flushInput()
         self.stm.write(data)
         self.stm.flushInput()        # self.stm.flushInput()
         print(f"[STM/INFO] Sent {data}")

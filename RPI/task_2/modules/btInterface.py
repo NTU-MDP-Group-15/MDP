@@ -26,9 +26,9 @@ class BTServerInterface:
         self.c_sock = None
     
     def connect(self) -> bool:
-        """
+        '''
             Function used to advertise device for other nodes to connect
-        """
+        '''
         self.s_sock = bt.BluetoothSocket(bt.RFCOMM)
         self.s_sock.bind(("", bt.PORT_ANY))
         self.s_sock.listen(1)
@@ -46,9 +46,11 @@ class BTServerInterface:
             return True
     
     def disconnect(self) -> None:
+        '''
+        Function used to properly close any open sockets
+        '''
         if self.c_sock:        
             self.c_sock.close()
-        
         if self.s_sock:
             self.s_sock.close()
             

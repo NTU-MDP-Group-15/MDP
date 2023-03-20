@@ -34,6 +34,9 @@ class AlgoServerInterface:
         self.c_sock = None
     
     def connect(self) -> bool:
+        '''
+        Function used to open sockets to receive/send data
+        '''
         try:
             self.s_sock = socket.socket(socket.AF_INET, self.protocol)
             self.s_sock.bind((self.rpi_ip, self.algo_port))
@@ -58,17 +61,26 @@ class AlgoServerInterface:
         return False
             
     def disconnect(self):
+        '''
+        Function used to properly kill threads & any existing open sockets/camera
+        '''
         if self.c_sock:
             self.c_sock.close()
         if self.s_sock:
             self.s_sock.close()
             
     def send(self, data) -> None:
+        '''
+        Function used to send data through algo socket
+        '''
         print(f"[ALGO/INFO] Sending {data}")
         self.c_sock.sendall(data.encode())
         print(f"[ALGO/INFO] Sent {data}")
     
     def receive(self) -> str:
+        '''
+        Function used to receive data through algo socket
+        '''
         while True:
             try:
                 data = self.c_sock.recv(1024)

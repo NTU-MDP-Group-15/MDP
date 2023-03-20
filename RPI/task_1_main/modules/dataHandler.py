@@ -97,13 +97,7 @@ class DataHandler:
                 # Step 6: Take pictures and send to ImageRec Server
                 #self.im_int.take_send_picture()
                 self.im_int.send_image_flag = True
-                '''
-                while self.im_int.send_image_flag == True: pass
-                self.stm_int.write(b"11005")
-                self.im_int.send_image_flag = True
-                while self.im_int.send_image_flag == True: pass
-                self.stm_int.write(b"01005")
-                '''
+                
                 id = int(self.im_int.receive())
                 obs_id = self.obstacle_id_order.pop(0)
             
