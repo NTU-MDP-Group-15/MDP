@@ -1,6 +1,16 @@
+"""
+Filename: flask_server.py
+Version: 1.0
+
+Simple flask server to display images taken and processed by YOLOv5 
+
+! Updates (DDMMYY)
+170323 - Removed livestream as there was too much delay
+"""
+
 import os
-#import cv2
-import imagezmq
+# import cv2
+# import imagezmq
 
 from flask import Flask, render_template, Response
 
@@ -50,4 +60,3 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
