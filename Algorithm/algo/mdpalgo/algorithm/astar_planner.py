@@ -337,7 +337,7 @@ class AutoPlanner():
         self.obs_coords = obs_coords # list of coordinates of obstacle cell
         self.reset_potential_goal_nodes()
         self.add_potential_goal_node(self.end_node)
-        self.set_neighbours_as_potential_goal_nodes()
+        #self.set_neighbours_as_potential_goal_nodes()
 
         self.initialize_yet_to_visit()
         self.initialize_visited_nodes()
@@ -451,6 +451,57 @@ class AutoPlanner():
         tagged_arr.append(current_tag + current_count_str)
 
         # Print the tagged array
+        return tagged_arr
+    
+    def process_movement_string2(self,arr):
+        if not arr:
+            return []
+
+        # Initialize variables to keep track of current tag and count
+        current_tag = arr[0]
+        current_count = 1
+
+        # Initialize empty list to store tagged array
+        tagged_arr = []
+
+        # Loop through each element in the array, starting from the second element
+        for i in range(1, len(arr)):
+            # If the current element is the same as the previous element, increment count
+            if arr[i] == current_tag:
+                if current_tag in ['FL', 'FR', 'BL', 'BR']:
+                    current_count += 1
+                elif current_tag in ['F', 'B'] and current_count == 1:
+                    tagged_arr.append(current_tag + '010')
+            # If the current element is different from the previous element, add the tagged version of the previous tag and count to the tagged array
+            else:
+                if current_tag == 'F':
+                    tagged_arr.append('F010' if current_count == 1 else 'F010' + 'F010')
+                elif current_tag == 'B':
+                    tagged_arr.append('B010' if current_count == 1 else 'B010' + 'B010')
+                else:
+                    if current_tag in ['FL', 'FR', 'BL', 'BR']:
+                        current_count_str = str(current_count * 90).zfill(3)
+                        tagged_arr.append(current_tag + current_count_str)
+                    else:
+                        tagged_arr.append(current_tag + '010')
+                    # Reset current count to 1
+                    current_count = 1
+
+                # Reset current tag to the new element
+                current_tag = arr[i]
+
+        # Handle the last element
+        if current_tag == 'F':
+            tagged_arr.append('F010' if current_count == 1 else 'F010' + 'F010')
+        elif current_tag == 'B':
+            tagged_arr.append('B010' if current_count == 1 else 'B010' + 'B010')
+        else:
+            if current_tag in ['FL', 'FR', 'BL', 'BR']:
+                current_count_str = str(current_count * 90).zfill(3)
+                tagged_arr.append(current_tag + current_count_str)
+            else:
+                tagged_arr.append(current_tag + '010')
+
         return tagged_arr
 
     def get_path_from_parent(self, node) -> list:

@@ -34,7 +34,7 @@ class Simulator:
         self.screen = None
         if not constants.HEADLESS:
             self.screen = pygame.display.set_mode(WINDOW_SIZE)
-            self.screen.fill(constants.GRAY)
+            self.screen.fill(constants.SIMULATOR_BG)
 
         # Callback methods queue - for passing of callback functions from worker thread to main UI thread
         self.callback_queue = queue.Queue()
@@ -304,7 +304,7 @@ class Simulator:
     #         return result[0]
 
     def reprint_screen_and_buttons(self):
-        self.screen.fill(constants.GRAY)
+        self.screen.fill(constants.SIMULATOR_BG)
         self.panel.redraw_buttons()
 
     def check_button_clicked(self, pos):
