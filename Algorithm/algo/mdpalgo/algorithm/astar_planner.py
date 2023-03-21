@@ -337,12 +337,9 @@ class AutoPlanner():
         self.obs_coords = obs_coords # list of coordinates of obstacle cell
         self.reset_potential_goal_nodes()
         self.add_potential_goal_node(self.end_node)
-        self.set_neighbours_as_potential_goal_nodes()
-
         self.initialize_yet_to_visit()
         self.initialize_visited_nodes()
         self.reset_id()
-
         self.add_node_to_yet_to_visit(self.start_node)
 
         # Adding a stop condition. This is to avoid any infinite loop and stop
@@ -415,8 +412,6 @@ class AutoPlanner():
         path.reverse()
         movements_str = self.process_movement_string(movements_str)
         self.full_path.append(movements_str)
-
-        #print("Current Full Path: ", self.full_path)
         return movements, path, movements_str
 
     def process_movement_string(self,arr):
@@ -452,7 +447,7 @@ class AutoPlanner():
 
         # Print the tagged array
         return tagged_arr
-
+    
     def get_path_from_parent(self, node) -> list:
         parent_node = node.parent
         move = node.move_from_parent
