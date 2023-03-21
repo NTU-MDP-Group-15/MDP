@@ -38,7 +38,6 @@ class Panel(object):
         for button in self.buttons:
             button.draw_button(button.surface, button.color, button.length, button.height, button.x, button.y, button.width)
             button.write_text(button.surface, button.text, button.text_color, button.length, button.height, button.x, button.y)
-            # button.rect = pygame.Rect(x, y, length, height)
 
     def button_clicked(self, button):
         return button.pressed()

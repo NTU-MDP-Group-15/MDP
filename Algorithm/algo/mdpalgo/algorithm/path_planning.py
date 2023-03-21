@@ -208,8 +208,6 @@ class PathPlan(object):
 
     def send_to_rpi(self):
         if not self.obstacle_list_rpi:
-            # Call predict function on finish
-            #self.simulator.predict_on_finish()
             self.send_to_rpi_finish_task()
             return
 
@@ -217,8 +215,6 @@ class PathPlan(object):
         self.reset_num_move_completed_rpi()
         self.set_total_num_move_from_movement_message(self.all_movements_dict[self.obstacle_key])
         print("Remaining obstacles: ", self.obstacle_list_rpi)
-        #self.simulator.comms.send(self.all_robot_pos_dict[self.obstacle_key])
-        #self.simulator.comms.send(self.all_movements_dict[self.obstacle_key])
         id=[]
         id.append(str(self.get_target_id(self.target)))
         self.movement_string=id+self.movement_string
@@ -239,12 +235,9 @@ class PathPlan(object):
 
     def send_to_rpi_finish_task(self):
         full_path_string = "STM/" + str(self.full_path)
-        #self.simulator.comms.send(full_path_string)
         full_robot_pos_string = "AND/[C10] " + ",".join(self.robot_pos_string)
-        #self.simulator.comms.send(full_path_string + full_robot_pos_string)
         self.simulator.comms.send(full_path_string ) #Send full list of robot coordinates for android to update
         self.simulator.comms.send(full_robot_pos_string)
-        #self.simulator.comms.send("FINISH/EXPLORE/")
 
     def reset_num_move_completed_rpi(self):
         self.num_move_completed_rpi = 0

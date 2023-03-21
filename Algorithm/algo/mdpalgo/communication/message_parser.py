@@ -13,7 +13,6 @@ class MessageType(Enum):
     """
     START_TASK = "START" # first token is "START"
     UPDATE_ROBOT_POSE = "DONE" # current pose of the robot
-    IMAGE_TAKEN = "PHOTODATA" # the photo taken by the robot
 
 class TaskType(Enum):
     """Type of tasks"""
@@ -77,7 +76,7 @@ class MessageParser:
             raise ValueError(f"Start task message contains invalid task type: {task}")
 
         data_dict = {"task": task}
-        if task == TaskType.TASK_PATH: # task for week 9, not much prior information
+        if task == TaskType.TASK_PATH:
             pass
         elif task == TaskType.TASK_EXPLORE: # task for week 8
             data_dict = {**data_dict, **self.parse_explore_task(message)}
@@ -139,25 +138,6 @@ class MessageParser:
 
         return data_dict
 
-    # def parse_image_taken(self, message:str) -> dict:
-    #     """Parse the image taken message to return the image as PIL Image.
-
-    #     Example:
-    #         >>> message = "PHOTODATA/<image_string>"
-    #         >>> parse_image_taken(message)
-    #         {"image": <np_ndarray image>}
-    #     """
-    #     image_string = message.partition("/")[2]
-    #     data_dict = {}
-    #     img_bytes = base64.b64decode(image_string.encode("utf-8"))
-    #     jpg_as_np = np.frombuffer(img_bytes, dtype=np.uint8)
-    #     bgr_array = cv2.imdecode(jpg_as_np, cv2.IMREAD_COLOR)
-
-    #     rgb_image: Image.Image = convert_bgr_ndarray_to_rgb_image(bgr_array)
-
-    #     data_dict["image"] = rgb_image
-    #     return data_dict
-
 if __name__ == "__main__":
     parser = MessageParser()
 
@@ -196,13 +176,3 @@ if __name__ == "__main__":
             "obstacle_key": {"x": 9, "y": 8}
         }
     }
-
-    # Test the method to parse image
-    import mdpalgo.tests.images as test_images
-    from imagerec.helpers import get_path_to
-    original_image = cv2.imread(f'{get_path_to(test_images).joinpath("catimage.jpg")}')
-    buffer = cv2.imencode('.jpg', original_image)[1].tobytes()
-    message = "PHOTODATA/" + base64.b64encode(buffer).decode("utf-8")
-    message_data = parser.parse(message)
-    assert message_data["type"] == MessageType.IMAGE_TAKEN
-    assert type(message_data["data"]["image"]) == Image.Image

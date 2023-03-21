@@ -69,7 +69,6 @@ class AlgoClient:
         try:
             print(f'[Algo] Message to Algo Server: {message}')
             self.client_socket.sendall(self.encode(message))
-            #self.send_message_with_size(self.encode(message))
 
         except Exception as error:
             print("[Algo] Failed to send to Algo Server.")
@@ -83,13 +82,6 @@ class AlgoClient:
     def decode(self, raw_bytes: bytes) -> str:
         """Decode a byte array to a string message"""
         return raw_bytes.strip().decode(FORMAT)
-
-    def send_message_with_size(self, data: bytes):
-        """Send (size, data) where size is size in bytes of data"""
-        number_of_bytes = len(data)
-        packet_length = struct.pack("!I", number_of_bytes)
-        packet_length += data
-        #self.client_socket.sendall(packet_length)
 
     def receive_message_with_size(self):
         """Receive the raw bytes from the message"""

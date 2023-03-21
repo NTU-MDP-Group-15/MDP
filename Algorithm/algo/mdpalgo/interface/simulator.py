@@ -146,10 +146,8 @@ class Simulator:
         """Connect to RPi wifi server and start a thread to receive messages """
         self.comms = AlgoClient()
         self.comms.connect()
-        #self.recv_thread = threading.Thread(target=self.receiving_process)
         constants.RPI_CONNECTED = True
         self.receiving_process()
-        #self.recv_thread.start()
 
     def handle_worker_callbacks(self):
         """Check for callbacks from worker thread and handle them
@@ -200,15 +198,11 @@ class Simulator:
 
         if task == TaskType.TASK_EXPLORE:  # Week 8 Task
             # Reset first
-            #self.callback_queue.put(self.reset_button_clicked)
             self.reset_button_clicked()
             # Set robot starting pos
             robot_params = message_data['robot']
             logging.info("Setting robot position: %s", robot_params)
             robot_x, robot_y, robot_dir = int(robot_params["x"]), int(robot_params["y"]), int(robot_params["dir"])
-
-            #self.callback_queue.put([self.car.update_robot, [robot_dir, self.grid.grid_to_pixel((robot_x, robot_y))]])
-            #self.callback_queue.put(self.car.redraw_car_refresh_screen)
             self.car.update_robot(robot_dir, self.grid.grid_to_pixel((robot_x, robot_y)))
             self.car.redraw_car_refresh_screen()
 
@@ -217,91 +211,21 @@ class Simulator:
             for obstacle in message_data["obs"]:
                 logging.info("Obstacle: %s", obstacle)
                 id, grid_x, grid_y, dir = obstacle["id"], int(obstacle["x"]), int(obstacle["y"]), int(obstacle["dir"])
-                #self.callback_queue.put([self.grid.create_obstacle, [grid_x, grid_y, dir]])
                 self.grid.create_obstacle([id, grid_x, grid_y, dir])
 
             # Update grid, start explore
-            #self.callback_queue.put(self.car.redraw_car_refresh_screen)
             self.car.redraw_car_refresh_screen()
 
             logging.info("[AND] Doing path calculation...")
-            #self.callback_queue.put(self.start_button_clicked)
             self.start_button_clicked()
-
-        elif task == TaskType.TASK_PATH:  # Week 9 Task
-            pass
 
     def on_receive_update_robot_pose(self, message_data: dict):
         print("Received updated robot pose")
         status = message_data["status"]
         if status == "DONE":
             self.path_planner.update_num_move_completed(message_data["num_move"])
-            # if self.path_planner.is_move_to_current_obstacle_done():
-            #     self.path_planner.request_photo_from_rpi()
         else:
             raise ValueError("Unimplemented response for updated robot pose")
-
-    # def on_receive_image_taken_message(self, data_dict: dict):
-    #     image = data_dict["image"]
-    #     infer_result = infer(image)
-    #     try:
-    #         target_id = self.check_infer_result(infer_result)
-
-    #         # reset exception count if there is an image result returned after retaking photo once
-    #         if self.no_image_result_count == 1:
-    #             self.no_image_result_count = 0
-
-    #     except Exception as e:
-    #         logging.exception(e)
-    #         self.no_image_result_count += 1
-
-    #         # if no image result for 2 times, return early to prevent request photo loop
-    #         if self.no_image_result_count == 2:
-    #             self.no_image_result_count = 0
-    #             self.path_planner.skip_current_target()
-    #             self.path_planner.send_to_rpi()
-    #             return
-
-    #         self.path_planner.request_photo_from_rpi() # take photo again if exception raised
-    #         return
-
-    #     # get list of images
-    #     list_of_images = list(self.image_folder.glob("*.jpg"))
-    #     print("List of images:", list_of_images)
-
-    #     # set image name
-    #     if len(list_of_images) == 0:
-    #         image_name = "img_1"
-    #     else:
-    #         latest_image = max(list_of_images, key=os.path.getctime)
-    #         print("Latest:", latest_image)
-    #         previous_image_name = latest_image.stem
-    #         print("Previous image name:", previous_image_name)
-    #         image_number = int(previous_image_name.split("_")[-1]) + 1
-    #         image_name = "img_" + str(image_number)
-
-    #     print("Image label:", target_id)
-    #     print("Image name:", image_name)
-    #     image.save(self.image_folder.joinpath(f"{image_name}.jpg"))
-    #     image_result_string = self.path_planner.get_image_result_string(target_id)
-    #     if constants.RPI_CONNECTED:
-    #         # send image result string to rpi
-    #         self.comms.send(image_result_string)
-    #         self.path_planner.send_to_rpi()
-
-    # def check_infer_result(self, infer_result):
-    #     if infer_result == "Nothing detected":
-    #         raise Exception("Nothing detected")
-
-    #     # remove all elements in infer_result that are "Bullseye"
-    #     result = [elem for elem in infer_result if elem != "Bullseye"]
-
-    #     # if all elements in list are "Bullseye", raise exception
-    #     if len(result) == 0:
-    #         raise Exception("Only Bullseye")
-    #     # get first element that is not "Bullseye"
-    #     else:
-    #         return result[0]
 
     def reprint_screen_and_buttons(self):
         self.screen.fill(constants.SIMULATOR_BG)
@@ -354,8 +278,6 @@ class Simulator:
 
         # Get fastest route (currently not using this)
         self.astar = AStar(self.grid, self.car.grid_x, self.car.grid_y)
-        # fastest_route = self.astar.get_astar_route()
-        # logging.info("Astar route: " + str(fastest_route))
 
         # Get fastest route using AStar Hamiltonian
         if len(self.grid.get_target_locations()) != 0:
@@ -373,12 +295,6 @@ class Simulator:
             self.path_planner = PathPlan(self, self.grid, self.car, optimized_fastest_route)
             logging.debug("Fastest Route: ", optimized_fastest_route)
             self.path_planner.start_robot()
-            
-
-    def predict_on_finish(self):
-        # call predict function after finishing task
-        # os.system(f'python -m imagerec.predict \"{self.image_folder}\"')
-        pass
 
     def reset_button_clicked(self):
         self.grid.reset_data()
@@ -396,16 +312,5 @@ if __name__ == "__main__":
     data_dict = x.parser.parse(message)["data"]
     # Test the threading without Android connected
     thread = threading.Thread(target=lambda: x.on_receive_start_task_message(data_dict))
-    thread.start()
-
-    # # Test the receiving image function
-    # import mdpalgo.tests.images
-    # image_folder = get_path_to(mdpalgo.tests.images)
-    # image_path = image_folder.joinpath("img_1.jpg")
-    # with Image.open(image_path) as image:
-    #     image.load()
-    # data_dict = {"image": image}
-    # thread = threading.Thread(target=lambda: x.on_receive_image_taken_message(data_dict))
-
     thread.start()
     x.run()
